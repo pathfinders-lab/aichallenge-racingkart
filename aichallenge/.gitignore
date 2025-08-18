@@ -3,3 +3,8 @@ log/
 .vscode/browse.vc.db
 .vscode/browse.vc.db-shm
 .vscode/browse.vc.db-wal
+documents-aichallenge/
+workspace/src/aichallenge-trajectory-editor/
+workspace/src/aichallenge_submit/mpc-vehicle-controller/
+workspace/src/aichallenge_submit/parameter_tuning_simple_forward_looking_controller/
+workspace/src/aichallenge_submit/simple_forward_looking_controller/
