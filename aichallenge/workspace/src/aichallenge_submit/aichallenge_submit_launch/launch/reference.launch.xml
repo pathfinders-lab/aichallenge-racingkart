@@ -129,7 +129,8 @@
   <let name="steering_tire_angle_gain_var" value="1.50" if="$(var simulation)"/>
   <let name="steering_tire_angle_gain_var" value="1.639" unless="$(var simulation)"/>
 
-  <node pkg="simple_pure_pursuit" exec="simple_pure_pursuit" name="simple_pure_pursuit_node" output="screen">
+  <!-- <node pkg="simple_pure_pursuit" exec="simple_pure_pursuit" name="simple_pure_pursuit_node" output="screen"> -->
+  <node pkg="simple_pure_pursuit_py" exec="simple_pure_pursuit_node" name="simple_pure_pursuit_node" output="screen">
     <param name="use_external_target_vel" value="false"/>
     <param name="external_target_vel" value="10.0"/>
     <param name="lookahead_gain" value="0.5"/>
