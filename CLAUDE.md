@@ -39,6 +39,7 @@ Autoware Universe をベースとした自動運転ソフトウェアを開発�
 ## Key Files
 
 - `aichallenge/` — メイン開発ディレクトリ（ROS2パッケージ群）
+- `aichallenge/README.md` — エントリポイントまとめ
 - `docker-compose.yml` — サービス定義（触る際は注意）
 - `Dockerfile` — Autoware イメージ定義
 - `vehicle/` — 実車環境向け設定
@@ -48,15 +49,14 @@ Autoware Universe をベースとした自動運転ソフトウェアを開発�
 ## Git Workflow
 
 - Root Branch: develop
-- ブランチ作成は `/new-branch` を使う
 - PR 前に必ず `git rebase origin/develop` を実行する
 - PR 作成時は `Language > PR Description` に応じて
   `~/.claude/PULL_REQUEST_TEMPLATE/japanese.md` を
   `--body-file` で指定する
-- PR Review: @keigo06
+- PR Review: @keigo06 @copilot
 - マージは **Squash and Merge** のみ
 - マージ後はブランチを削除する
-- `main` へのマージはリリース時のみ
+- `main` は `upstream` の変更を反映させる場所とする（fork sync を行う）
 - `upstream` (AutomotiveAIChallenge 公式) への push は絶対に行わない
 
 ## Language
