@@ -1,0 +1,6 @@
+# すべて無視（下記の例外以外）
+*
+!.gitignore
+!settings.json
+!PULL_REQUEST_TEMPLATE/
+!PULL_REQUEST_TEMPLATE/**
