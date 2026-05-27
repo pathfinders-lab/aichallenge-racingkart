@@ -15,10 +15,8 @@ output/
 outputs/
 aichallenge/capture/
 
-# AI related local notes (do not commit)
-.claude
+# AI local notes (do not commit)
 doc/tmp/*
 /MEMORY.md
 /Plan.md
 /PR.md
-/CLAUDE.md
