@@ -15,6 +15,9 @@ output/
 outputs/
 aichallenge/capture/
 
+# analysis repo (separate git repository, exclude from tracking)
+racingkart-analysis/
+
 # AI local notes (do not commit)
 doc/tmp/*
 /MEMORY.md

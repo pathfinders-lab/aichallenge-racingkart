@@ -61,7 +61,7 @@ Autoware Universe をベースとした自動運転ソフトウェアを開発�
 
 ## Language
 
-- Code Comments: Japanese
+- Code Comments: English
 - Commit Messages: English
 - PR Description: Japanese
 
