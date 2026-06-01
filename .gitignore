@@ -15,7 +15,7 @@ output/
 outputs/
 aichallenge/capture/
 
-# 分析リポジトリ（別 git リポジトリのため除外）
+# analysis repo (separate git repository, exclude from tracking)
 racingkart-analysis/
 
 # AI local notes (do not commit)
