@@ -8,7 +8,6 @@ ament_auto_find_build_dependencies()
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/AckermannControlBoostCommand.msg"
   "msg/BorderCells.msg"
-  "msg/MpcStats.msg"
   "msg/PathConstraints.msg"
   DEPENDENCIES autoware_auto_control_msgs
 )
