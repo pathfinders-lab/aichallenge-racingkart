@@ -22,6 +22,7 @@
       - /clock
       - /localization/acceleration
       - /localization/kinematic_state
+      - /mpc/stats
     rosbag_output: rosbag2_autoware
     rosbag_storage_id: mcap
     # Leave both empty to keep rosbag output as plain .mcap (no outer compression).
