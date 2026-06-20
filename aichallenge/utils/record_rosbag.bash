@@ -26,6 +26,7 @@ TOPICS=(
     "/clock"
     "/localization/acceleration"
     "/localization/kinematic_state"
+    "/mpc/stats"
 )
 
 # Run under its own process group so we can stop reliably without killing other recorders.
