@@ -35,6 +35,10 @@ Autoware Universe をベースとした自動運転ソフトウェアを開発�
 - XML, YAML, シェルスクリプトのフォーマットは pre-commit で自動チェック
 - ROS2 パッケージは `aichallenge/` 以下に配置
 - Docker 関連は `docker-compose.yml` / `Dockerfile` を編集
+- 実装計画書は `docs/plan/YYYY-MM-DD-<feature>.md` に保存（`.gitignore` 済み、コミット不要）
+- PR マージ後または実装完了後に計画書ファイルを削除する（またはユーザーに削除を促す）
+- 仕様書 (`docs/spec/`) は「現状」を記述する。1 トピック 1 ファイル。日付をファイル名に含めない
+- `design_docs/` など `docs/` 以外への設計書作成は行わない
 
 ## Key Files
 
