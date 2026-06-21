@@ -518,6 +518,10 @@ class MPCController(Node):
         self._ref_path_pub_dummy = self.create_publisher(
             MarkerArray, "/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/bound", latching_qos)
 
+        # NOTE: (追加)MPC計算時間を記録するため
+        self._timing_pub = self.create_publisher(
+            Float32MultiArray, "/mpc/timing", 10)
+
         # Subscribers
         self._odom_sub = self.create_subscription(
             Odometry, "/localization/kinematic_state", self._odom_callback, 1)
@@ -806,6 +810,15 @@ class MPCController(Node):
         with self._stats.time_block("control"):
             u, max_delta = self._mpc.get_control()
             # self.get_logger().info(f"u: {u}")
+
+        # (追加)MPC計算時間を記録
+        if self._stats.exec_times["control"]:
+            mpc_time_ms = self._stats.exec_times["control"][-1] * 1000.0 # 直近のMPC計算時間
+            loop_period_ms = self._stats.periods[-1] * 1000.0 if self._stats.periods else 0.0 # ループ周期(実際)
+            target_period_ms = 1000.0 / self._mpc_cfg.control_rate  # ループ周期(目標)
+            msg = Float32MultiArray()
+            msg.data = [mpc_time_ms, loop_period_ms, target_period_ms]
+            self._timing_pub.publish(msg)
 
         if self._ref_vel_configulator is not None:
             ref_vel_mps = self._ref_vel_configulator.get_ref_vel(self._mpc.model.wp_id)
