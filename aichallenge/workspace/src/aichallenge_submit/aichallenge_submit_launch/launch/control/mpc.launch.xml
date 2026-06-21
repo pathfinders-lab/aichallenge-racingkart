@@ -10,6 +10,7 @@
     <param name="use_sim_time" value="$(var use_sim_time)"/>
     <param name="use_boost_acceleration" value="false"/>
     <param name="use_obstacle_avoidance" value="$(var use_obstacle_avoidance)"/>
-    <param name="use_stats" value="false"/>
+    <!-- <param name="use_stats" value="false"/> -->
+    <param name="use_stats" value="true"/>
   </node>
 </launch>
