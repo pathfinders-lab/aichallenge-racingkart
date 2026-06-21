@@ -21,6 +21,7 @@
 - `log-design.md` — `/output` 配下へログを集約する設計（compose / `run_evaluation.bash` の出力レイアウト）。
 - `makefile-target-naming.md` — Makefile ターゲットの `<service>-<command>` 命名ガイドライン。
 - `mpc-integration.md` — `multi_purpose_mpc_ros` のインテグレーション設計。
+- `strategy.md` — 競技戦略文書（競技形式・スコアリング・MPC現状・実装ロードマップ）。陳腐化しやすいため走行結果・実装進捗に合わせて更新する。
 
 ## docs/guide/ 一覧
 
