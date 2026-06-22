@@ -10,6 +10,20 @@
 - リファレンスドキュメント（`docs/spec/`・`docs/interface/`）は画像なし・Marp なし・SVG なしの plain Markdown のみ。図は ASCII ツリー / 表で表現する。`docs/guide/` は Marp デッキ（`*.marp.md`）を使用可。
 - 命名規約: spec / interface はトピック名・日付なし（例: `compose-overlays.md`、`participant-interface.md`）。
 
+## 計画書ライフサイクル（Claude・開発者向けルール）
+
+- **作成タイミング**: 複数ステップの実装を始める前。`docs/plan/` に保存（`.gitignore` 済み、コミット不要）。
+- **削除タイミング**: PR マージ後、即削除。「実装が終わった」＝「計画書は不要になった」。正はコード。
+- **場所**: `docs/plan/YYYY-MM-DD-<feature>.md`（コミットしない）。`docs/spec/` に計画書を置かない。
+- **仕様書との違い**: 計画書は「どう作るか（手順）」、仕様書は「今どうなっているか（現状）」。
+
+### Claude が守るべき約束
+
+1. 実装計画は `docs/plan/` に作る（`docs/spec/` ではない）。
+2. PR マージ後またはタスク完了後に計画書ファイルを削除する（またはユーザーに削除を促す）。
+3. 同一トピックの仕様書が既存なら新規ファイルを作らず上書き更新する。
+4. 日付付きファイル名は計画書のみ許可（`docs/plan/YYYY-MM-DD-*.md`）。仕様書はトピック名のみ（`docs/spec/<topic>.md`）。
+
 ## docs/spec/ 一覧
 
 - `host-uid-containers.md` — 全 dev サービスをホスト UID/GID で実行する設計（rocker 相当を docker compose の `user:` / `HOME=/tmp` / `group_add` で再現）。実装状況・差異（sound.yml は simulator のみ、group_add は数値 GID）も記載。
@@ -21,6 +35,7 @@
 - `log-design.md` — `/output` 配下へログを集約する設計（compose / `run_evaluation.bash` の出力レイアウト）。
 - `makefile-target-naming.md` — Makefile ターゲットの `<service>-<command>` 命名ガイドライン。
 - `mpc-integration.md` — `multi_purpose_mpc_ros` のインテグレーション設計。
+- `strategy.md` — 競技戦略文書（競技形式・スコアリング・MPC現状・実装ロードマップ）。陳腐化しやすいため走行結果・実装進捗に合わせて更新する。
 
 ## docs/guide/ 一覧
 
