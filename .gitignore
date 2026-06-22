@@ -1,4 +1,6 @@
 *details.json
+aichallenge/result-summary.json
+aichallenge/simulator_scripts/optuna.sh
 /log
 *.log
 *.webm
