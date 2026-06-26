@@ -1,7 +1,7 @@
 # make file inspired by https://roborovsky-racers.github.io/RoborovskyNote/
 SHELL := /bin/bash
 
-.PHONY: autoware-build autoware-vehicle autoware-simulator autoware-request-initialpose autoware-request-control  awsim-request-start awsim-request-reset autoware-driver-zenoh autoware-driver-zenoh-rosbag dev-eval \
+.PHONY: autoware-build autoware-vehicle autoware-simulator autoware-request-initialpose autoware-request-control  awsim-request-start awsim-request-reset autoware-driver-zenoh autoware-driver-zenoh-rosbag trial \
 	simulator dev dev2 dev3 dev4 driver zenoh download rviz2 down down_all ps autoware-bash eval
 
 # Used by docker-compose.yml for build/eval artifact ownership.
@@ -73,9 +73,9 @@ dev: simulator autoware-simulator
 	@echo "To stop: make down  (docker compose down --remove-orphans)"
 
 # 6-lap timed run on dev image (records /mpc/stats; no d1-result-details.json)
-dev-eval: SIM_MODE := eval
-dev-eval: simulator autoware-simulator
-	@echo "Start 6-lap dev run (eval AWSIM, dev Autoware)"
+trial: SIM_MODE := trial
+trial: simulator autoware-simulator
+	@echo "Start 6-lap trial run (trial AWSIM, dev Autoware)"
 	@echo "To stop: make down  (docker compose down --remove-orphans)"
 
 dev2: SIM_MODE := dev2
