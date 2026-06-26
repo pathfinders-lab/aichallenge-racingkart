@@ -3,7 +3,10 @@
 AWSIM_DIRECTORY=/aichallenge/simulator/AWSIM
 export ROS_DOMAIN_ID=0
 
-exec "$AWSIM_DIRECTORY/AWSIM.x86_64" \
+# Shell-level hard cap: AWSIM init (~120 s) + race timeout (600 s) + buffer (120 s) = 840 s.
+# This guarantees the container exits even if AWSIM's own --timeout gets stuck
+# (e.g. vehicle wedged before the race clock starts in sync mode).
+exec timeout 840 "$AWSIM_DIRECTORY/AWSIM.x86_64" \
     --start-mode sync \
     --start-count-seconds 5 \
     --vehicles 1 \
