@@ -6,7 +6,7 @@ export ROS_DOMAIN_ID=0
 # 7-lap run with dev Autoware (custom MPC live-mounted).  Running 7 laps ensures
 # that "Lap 6 completed" is logged before Finish fires, so analysis can use the
 # accurate MPC-controller lap times instead of kinematic-based estimation.
-# Shell-level hard cap: countdown (10 s) + 7 laps (~500 s) + buffer (120 s) = 630 s.
+# Shell-level hard cap: countdown (10 s) + AWSIM --timeout (600 s) + init/buffer (~190 s) = 800 s.
 exec timeout 800 "$AWSIM_DIRECTORY/AWSIM.x86_64" \
     --start-mode count \
     --start-count-seconds 10 \

@@ -72,10 +72,10 @@ dev: simulator autoware-simulator
 	@echo "Start dev simulation (AWSIM + Autoware)"
 	@echo "To stop: make down  (docker compose down --remove-orphans)"
 
-# 6-lap timed run on dev image (records /mpc/stats; no d1-result-details.json)
+# 6 measured laps on dev image (runs 7 laps; records /mpc/stats; no d1-result-details.json)
 trial: SIM_MODE := trial
 trial: simulator autoware-simulator
-	@echo "Start 6-lap trial run (trial AWSIM, dev Autoware)"
+	@echo "Start trial run (7 laps, 6 measured — trial AWSIM, dev Autoware)"
 	@echo "To stop: make down  (docker compose down --remove-orphans)"
 
 dev2: SIM_MODE := dev2
