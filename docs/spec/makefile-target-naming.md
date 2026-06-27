@@ -94,6 +94,7 @@ Good:
 - `autoware-build`
 - `simulator` / `awsim-request-start`
 - `eval`（`DOMAIN_ID` / `DOMAIN_IDS` などは変数で）
+- `trial`（dev イメージ + eval スタイル AWSIM で 6 周計測。`d1-result-details.json` 非生成）
 - `dev` / `dev2` / `dev3` / `dev4`
 - `compose-ps` / `compose-down`
 

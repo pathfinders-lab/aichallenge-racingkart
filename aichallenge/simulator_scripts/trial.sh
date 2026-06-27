@@ -3,16 +3,17 @@
 AWSIM_DIRECTORY=/aichallenge/simulator/AWSIM
 export ROS_DOMAIN_ID=0
 
-# Shell-level hard cap: AWSIM init (~120 s) + race timeout (600 s) + buffer (120 s) = 840 s.
-# This guarantees the container exits even if AWSIM's own --timeout gets stuck
-# (e.g. vehicle wedged before the race clock starts in sync mode).
-exec timeout 840 "$AWSIM_DIRECTORY/AWSIM.x86_64" \
-    --start-mode sync \
-    --start-count-seconds 5 \
+# 7-lap run with dev Autoware (custom MPC live-mounted).  Running 7 laps ensures
+# that "Lap 6 completed" is logged before Finish fires, so analysis can use the
+# accurate MPC-controller lap times instead of kinematic-based estimation.
+# Shell-level hard cap: countdown (10 s) + AWSIM --timeout (600 s) + init/buffer (~190 s) = 800 s.
+exec timeout 800 "$AWSIM_DIRECTORY/AWSIM.x86_64" \
+    --start-mode count \
+    --start-count-seconds 10 \
     --vehicles 1 \
     --npcs 0 \
     --boosts 2 \
-    --laps 6 \
+    --laps 7 \
     --timeout 600 \
     --steer-source ackermann \
     --sound off \

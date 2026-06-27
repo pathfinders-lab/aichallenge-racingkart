@@ -28,7 +28,8 @@ make eval → run_evaluation.bash → evaluation.launch.xml
 
 | スクリプト | 用途 | 引数 | 主な設定 |
 |---|---|---|---|
-| `eval.sh` | 評価 | - | 1台 / 6 laps / 600s / count開始 / handicap・wall-recovery・ranking off |
+| `eval.sh` | 評価 | - | 1台 / 6 laps / 600s / sync開始 / handicap・wall-recovery・ranking off |
+| `trial.sh` | 開発計測（`make trial`） | - | 1台 / **7 laps** / count開始 / `/mpc/stats` 記録あり |
 | `dev.sh` | 開発 | 車両数 N（既定 1） | unlimited laps・timeout / count開始 / wall-recovery on / handicap・ranking off |
 | `parallel.sh` | 複数台レース | - | 3台 / 6 laps / 600s / sync開始 / handicap・wall-recovery・ranking on |
 | `gate.sh` | Safety Gate テスト | テスト番号 1/2/3/all（既定 all） | 1台。all は test1〜3 を順次実行 |
@@ -38,9 +39,12 @@ make eval → run_evaluation.bash → evaluation.launch.xml
 | `multiplay-client.sh` | Multiplay クライアント | - | 127.0.0.1:7777、vehicle-index 1 |
 | `simulator.sh`（既定） | 引数なし素起動 | - | 起動時UIで設定を選択 |
 
-- start-mode: `dev.sh` は count（全車接地後にカウントダウン開始、`/admin/awsim/start` 不要）。
+- start-mode: `dev.sh` / `trial.sh` は count（全車接地後にカウントダウン開始、`/admin/awsim/start` 不要）。
   `eval.sh` / `parallel.sh` は sync（`/admin/awsim/start` 待ち。評価では awsim_state_manager が
   自動送信、手動で送るなら `make awsim-request-start`）。
+- `trial.sh` が 7 laps を指定する理由: `--laps 6` だと AWSIM が Finish を発火した瞬間にロスバッグが
+  停止し、6周目の "Lap 6 completed" ログが取れない。7 周走らせることで 6 周目終了ログを記録し、
+  解析ツール（`racingkart-analysis`）側で 6 周分のみを使用する。
 - センサー（camera/LiDAR）は off が既定。GPU 描画への切り替えは各ファイル末尾のコメント参照。
 - 引数の完全な仕様は AWSIM リポジトリの `docs/AIChallenge/specs/CLI.md` を参照。
 
