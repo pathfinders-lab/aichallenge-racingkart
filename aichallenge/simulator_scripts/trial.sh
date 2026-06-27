@@ -3,16 +3,17 @@
 AWSIM_DIRECTORY=/aichallenge/simulator/AWSIM
 export ROS_DOMAIN_ID=0
 
-# 6-lap timed run with dev Autoware (custom MPC live-mounted).
-# Uses --start-mode count so AWSIM auto-starts without a sync signal.
-# Shell-level hard cap: countdown (10 s) + race timeout (600 s) + buffer (120 s) = 730 s.
-exec timeout 730 "$AWSIM_DIRECTORY/AWSIM.x86_64" \
+# 7-lap run with dev Autoware (custom MPC live-mounted).  Running 7 laps ensures
+# that "Lap 6 completed" is logged before Finish fires, so analysis can use the
+# accurate MPC-controller lap times instead of kinematic-based estimation.
+# Shell-level hard cap: countdown (10 s) + 7 laps (~500 s) + buffer (120 s) = 630 s.
+exec timeout 800 "$AWSIM_DIRECTORY/AWSIM.x86_64" \
     --start-mode count \
     --start-count-seconds 10 \
     --vehicles 1 \
     --npcs 0 \
     --boosts 2 \
-    --laps 6 \
+    --laps 7 \
     --timeout 600 \
     --steer-source ackermann \
     --sound off \
