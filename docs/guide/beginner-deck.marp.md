@@ -38,13 +38,14 @@ style: |
 ## このリポジトリでできること
 
 - AWSIM + Autoware の実行環境を起動できる
-- 開発実行 (`make dev`) と評価実行 (`make eval`) を使い分けられる
+- 開発実行 (`make dev`) / 計測 (`make trial`) / 評価実行 (`make eval`) を使い分けられる
 - 実行ログを `output/` に整理し、提出物を `submit/` に作れる
+- 走行データを解析・可視化し、Optuna で MPC パラメータを自動最適化できる（`racingkart-analysis/`）
 - シミュレータ運用から実車補助 (`vehicle/`, `remote/`) まで周辺ツールが揃っている
 
 ---
 
-## まず覚える5コマンド
+## まず覚えるコマンド
 
 <div class="columns">
 
@@ -54,7 +55,8 @@ style: |
 ./docker_build.sh dev       # 開発用イメージをビルド（最初に1回）
 make autoware-build         # Autoware/ROS 2 overlay をビルド
 make dev                    # AWSIM + Autoware を開発モードで起動（1台）
-make eval                   # 評価フローを一括実行
+make trial                  # 6周計測（rosbag + MPC stats 収録）→ 解析に使う
+make eval                   # 評価フローを一括実行（提出前の最終確認）
 make down                   # コンテナ停止
 ```
 
@@ -62,7 +64,7 @@ make down                   # コンテナ停止
 
 <div>
 
-- 迷ったらこの5つから始める
+- 迷ったらこれらから始める
 - セットアップは `./setup.bash bootstrap` で一括実行
 
 ### 実行順序（初回）
@@ -106,6 +108,7 @@ make down                   # コンテナ停止
 - `vehicle/` — 実車向け補助スクリプト
 - `remote/` — SSH/GUI など遠隔運用補助
 - `docs/spec/` — 手順書・運用設計資料
+- `racingkart-analysis/` — 走行データ解析ツール群（submodule）
 - `output/` — 実行結果
 - `submit/` — 提出アーカイブ
 
@@ -159,6 +162,7 @@ make down                   # コンテナ停止
 
 ### ポイント
 - `make dev` は常駐プロセス。手動停止を忘れずに
+- ラップタイムを計測したいときは `make dev` の代わりに `make trial` を使う
 
 </div>
 </div>
@@ -188,6 +192,78 @@ make down                   # コンテナ停止
 SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 # 詳細は aichallenge/simulator_scripts/README.md 参照
 ```
+
+</div>
+</div>
+
+---
+
+## チューニングフロー（make trial → 解析）
+
+<div class="columns">
+
+<div>
+
+### 手順
+1. `make trial` を実行（6 周計測・rosbag 収録）
+2. `racingkart-analysis/` で解析
+   ```bash
+   cd racingkart-analysis
+   uv run python scripts/extract_rosbag.py ../output/<ts>/d1/
+   uv run python scripts/analyze_results.py ../output/<ts>/d1/
+   uv run python scripts/plot_summary.py    ../output/<ts>/d1/
+   ```
+3. `summary_*.html` をブラウザで開いて確認
+
+</div>
+
+<div>
+
+### `make dev` との違い
+
+| | `make dev` | `make trial` |
+|---|---|---|
+| 用途 | 動作確認 | ラップタイム計測 |
+| 周回数 | 無制限 | 6周（7周走行） |
+| MPC stats 記録 | なし | あり |
+| eval イメージ | 不要 | 不要 |
+
+</div>
+</div>
+
+---
+
+## Optuna 自動最適化
+
+<div class="columns">
+
+<div>
+
+### 手順
+1. `racingkart-analysis/` から実行（シミュレータ起動・停止は自動）
+   ```bash
+   uv run python optuna/optuna_mpc_tuning.py \
+     --study-name mpc-q4 --n-trials 60
+   ```
+2. 別ターミナルで進捗をリアルタイム確認
+   ```bash
+   uv run optuna-dashboard \
+     sqlite:///output/optuna_mpc/mpc_tuning.db
+   # → http://localhost:8080
+   ```
+
+</div>
+
+<div>
+
+### ポイント
+- `make trial` の**自動多試行版**（N 回走行してパラメータを探索）
+- **ベイズ最適化（TPE）** で効率的に収束
+- 同じ `--study-name` で途中再開可能
+- 最適化対象: MPC コスト行列（Q, QN, R）
+
+### チームの最新結果
+https://pathfinders-lab.github.io/racingkart-results/
 
 </div>
 </div>

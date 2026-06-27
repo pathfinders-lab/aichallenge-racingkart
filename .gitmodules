@@ -1,3 +1,6 @@
 [submodule "aichallenge/workspace/src/aichallenge_submit/multi_purpose_mpc_ros_custom"]
 	path = aichallenge/workspace/src/aichallenge_submit/multi_purpose_mpc_ros_custom
-	url = https://github.com/keigo06/multi_purpose_mpc_ros_custom.git
+	url = https://github.com/pathfinders-lab/multi_purpose_mpc_ros_custom.git
+[submodule "racingkart-analysis"]
+	path = racingkart-analysis
+	url = https://github.com/pathfinders-lab/racingkart-analysis.git
