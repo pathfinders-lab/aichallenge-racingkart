@@ -40,7 +40,7 @@ style: |
 - AWSIM + Autoware の実行環境を起動できる
 - 開発実行 (`make dev`) / 計測 (`make trial`) / 評価実行 (`make eval`) を使い分けられる
 - 実行ログを `output/` に整理し、提出物を `submit/` に作れる
-- 走行データを解析して HTML ダッシュボードを生成し、結果を GitHub Pages で共有できる
+- 走行データを解析・可視化し、Optuna で MPC パラメータを自動最適化できる（`racingkart-analysis/`）
 - シミュレータ運用から実車補助 (`vehicle/`, `remote/`) まで周辺ツールが揃っている
 
 ---
@@ -227,6 +227,40 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 | 周回数 | 無制限 | 6周（7周走行） |
 | MPC stats 記録 | なし | あり |
 | eval イメージ | 不要 | 不要 |
+
+</div>
+</div>
+
+---
+
+## Optuna 自動最適化
+
+<div class="columns">
+
+<div>
+
+### 手順
+1. `racingkart-analysis/` から実行（シミュレータ起動・停止は自動）
+   ```bash
+   uv run python optuna/optuna_mpc_tuning.py \
+     --study-name mpc-q4 --n-trials 60
+   ```
+2. 別ターミナルで進捗をリアルタイム確認
+   ```bash
+   uv run optuna-dashboard \
+     sqlite:///output/optuna_mpc/mpc_tuning.db
+   # → http://localhost:8080
+   ```
+
+</div>
+
+<div>
+
+### ポイント
+- `make trial` の**自動多試行版**（N 回走行してパラメータを探索）
+- **ベイズ最適化（TPE）** で効率的に収束
+- 同じ `--study-name` で途中再開可能
+- 最適化対象: MPC コスト行列（Q, QN, R）
 
 ### チームの最新結果
 https://pathfinders-lab.github.io/racingkart-results/
