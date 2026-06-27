@@ -20,6 +20,7 @@ Toward the competition, we will update the following pages to provide informatio
 - `vehicle/`: 実車環境向け（セットアップ確認、Zenoh、rosbag など）
 - `remote/`: 実車/遠隔接続の補助（SSH/Zenoh/RViz/joy）
 - `docs/`: ガイド・スライドは [`docs/guide/`](docs/guide/)、仕様は [`docs/spec/`](docs/spec/)、インターフェイス契約は [`docs/interface/`](docs/interface/)
+- `racingkart-analysis/`: 走行データ解析ツール群（submodule）— rosbag → CSV → メトリクス → ダッシュボード / Optuna 最適化
 - `submit/`: 提出物（tar.gz）置き場
 - `output/`: 実行結果・ログ出力先（生成物）
 
@@ -73,6 +74,34 @@ make down
 ```
 
 コンテナはホストの UID/GID（`HOST_UID`/`HOST_GID`）で動作するため、`output/` 配下の生成物はホストユーザー所有になり root 権限は不要です。
+
+## 走行データ解析（racingkart-analysis）
+
+`make trial` / `make eval` 後の rosbag を解析してラップタイム・横偏差などのメトリクスを計算し、Optuna で MPC パラメータを自動最適化するツール群。
+
+```bash
+cd racingkart-analysis
+make install   # 初回のみ
+
+# 単回計測の解析（make trial 後）
+uv run python scripts/extract_rosbag.py   ../output/<timestamp>/d1/
+uv run python scripts/analyze_results.py  ../output/<timestamp>/d1/
+uv run python scripts/plot_summary.py     ../output/<timestamp>/d1/
+# → summary_*.html（6タブ HTML ダッシュボード）
+
+# Optuna 自動最適化
+uv run python optuna/optuna_mpc_tuning.py --study-name mpc-q4 --n-trials 60
+
+# 最適化完了後 → JSON レポートを生成して GitHub Pages に公開
+uv run python scripts/generate_optuna_report.py \
+  --study-name mpc-q4 \
+  --storage sqlite:///output/optuna_mpc/mpc_tuning.db
+uv run python scripts/publish_results.py \
+  --study output/optuna_mpc/reports/<id>.json \
+  --results-repo ~/racingkart-results
+```
+
+詳細は [`racingkart-analysis/README.md`](racingkart-analysis/README.md) および [`racingkart-analysis/optuna/README.md`](racingkart-analysis/optuna/README.md) を参照。
 
 ## まずは読んでほしいもの
 

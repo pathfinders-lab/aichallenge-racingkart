@@ -251,6 +251,12 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
      sqlite:///output/optuna_mpc/mpc_tuning.db
    # → http://localhost:8080
    ```
+3. 完了後に JSON レポートを生成（GitHub Pages 公開用）
+   ```bash
+   uv run python scripts/generate_optuna_report.py \
+     --study-name mpc-q4 \
+     --storage sqlite:///output/optuna_mpc/mpc_tuning.db
+   ```
 
 </div>
 
