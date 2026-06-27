@@ -209,9 +209,9 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 2. `racingkart-analysis/` で解析
    ```bash
    cd racingkart-analysis
-   uv run python scripts/extract_rosbag.py ../output/<ts>/d1/
-   uv run python scripts/analyze_results.py ../output/<ts>/d1/
-   uv run python scripts/plot_summary.py    ../output/<ts>/d1/
+   uv run python scripts/extract_rosbag.py ../output/<timestamp>/d1/
+   uv run python scripts/analyze_results.py ../output/<timestamp>/d1/
+   uv run python scripts/plot_summary.py    ../output/<timestamp>/d1/
    ```
 3. `summary_*.html` をブラウザで開いて確認
 
@@ -250,6 +250,12 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
    uv run optuna-dashboard \
      sqlite:///output/optuna_mpc/mpc_tuning.db
    # → http://localhost:8080
+   ```
+3. 完了後に JSON レポートを生成（GitHub Pages 公開用）
+   ```bash
+   uv run python scripts/generate_optuna_report.py \
+     --study-name mpc-q4 \
+     --storage sqlite:///output/optuna_mpc/mpc_tuning.db
    ```
 
 </div>
