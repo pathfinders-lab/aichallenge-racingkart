@@ -97,7 +97,7 @@ uv run python scripts/generate_optuna_report.py \
   --study-name mpc-q4 \
   --storage sqlite:///output/optuna_mpc/mpc_tuning.db
 uv run python scripts/publish_results.py \
-  --study output/optuna_mpc/reports/<id>.json \
+  --study output/optuna_mpc/reports/<author>-<study-name>.json \
   --results-repo ~/racingkart-results
 ```
 

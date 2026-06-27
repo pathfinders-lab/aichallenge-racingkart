@@ -209,9 +209,9 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 2. `racingkart-analysis/` で解析
    ```bash
    cd racingkart-analysis
-   uv run python scripts/extract_rosbag.py ../output/<ts>/d1/
-   uv run python scripts/analyze_results.py ../output/<ts>/d1/
-   uv run python scripts/plot_summary.py    ../output/<ts>/d1/
+   uv run python scripts/extract_rosbag.py ../output/<timestamp>/d1/
+   uv run python scripts/analyze_results.py ../output/<timestamp>/d1/
+   uv run python scripts/plot_summary.py    ../output/<timestamp>/d1/
    ```
 3. `summary_*.html` をブラウザで開いて確認
 
