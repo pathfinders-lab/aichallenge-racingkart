@@ -344,7 +344,7 @@ uv run python scripts/publish_results.py \
 | リポジトリ | URL |
 |---|---|
 | racingkart-analysis | https://pathfinders-lab.github.io/racingkart-analysis/ |
-| racingkart-results | https://keigo06.github.io/racingkart-results/ |
+| racingkart-results | https://pathfinders-lab.github.io/racingkart-results/ |
 
 </div>
 </div>
