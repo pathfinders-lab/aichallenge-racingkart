@@ -6,7 +6,7 @@
 Autoware Universe をベースとした自動運転ソフトウェアを開発し、レーシングカート（AWSIM シミュレータおよび実車）でタイムアタックを行う。
 
 - フォーク元: https://github.com/AutomotiveAIChallenge/aichallenge-racingkart
-- 自分のリポジトリ: https://github.com/keigo06/aichallenge-racingkart
+- 自分のリポジトリ: https://github.com/pathfinders-lab/aichallenge-racingkart
 
 ## Stack
 
