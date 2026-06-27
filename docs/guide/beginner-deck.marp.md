@@ -194,6 +194,163 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 
 ---
 
+## MPC 制御器（デフォルト制御器）
+
+<div class="columns">
+
+<div>
+
+### 仕組み
+- **LTV-MPC + OSQP** による最適制御（40 Hz）
+- 参照軌跡 CSV（`env/final_ver3/traj_mincurv.csv`）を直接読み込み
+- 状態: 横偏差 e_y・ヨー誤差 e_ψ・時刻 t
+- 出力: 速度指令・ステア角 → `/control/command/control_cmd`
+
+### 主要パラメータ（`config.yaml`）
+
+| パラメータ | 現在値 | 役割 |
+|---|---|---|
+| `v_max` | 20 km/h | 速度上限 |
+| `ay_max` | 6.5 m/s² | コーナー速度制限 |
+| `Q[2]`（時間コスト） | 100,000 | 速さへのインセンティブ |
+
+</div>
+
+<div>
+
+### 制御器の切り替え
+
+```xml
+<!-- reference.launch.xml -->
+<arg name="control_method" default="mpc"/>
+<!-- mpc / pure_pursuit / tiny_lidar_net / pilot_net -->
+```
+
+### リアルタイムチューニング
+
+```bash
+ros2 param set /mpc_controller v_max 25.0
+ros2 param set /mpc_controller ay_max 7.5
+```
+
+### 統計ログ記録
+
+`config.yaml` で `use_stats: true` にすると
+`/mpc/stats`（solve 時間・infeasible 回数）が
+rosbag に記録される
+
+</div>
+</div>
+
+---
+
+## 走行データ解析（racingkart-analysis）
+
+<div class="columns">
+
+<div>
+
+### 位置づけ
+
+- `racingkart-analysis/` はリポジトリ直下の **submodule**
+- ROS・Docker **不要**（uv + Python のみ）
+- `make eval` / `make trial` 後の `output/<timestamp>/d1/` を入力とする
+
+### パイプライン
+
+```
+rosbag2_autoware/*.mcap
+  → extract_rosbag.py
+    → csv/kinematic_state.csv  (x, y, vx, e_y, lap, s)
+    → csv/mpc_stats.csv        (solve_time_ms, ...)
+  → analyze_results.py
+    → run_*.json               (params + metrics + per_lap)
+  → plot_summary.py
+    → summary_*.html           (6 タブ HTML ダッシュボード)
+```
+
+</div>
+
+<div>
+
+### セットアップ
+
+```bash
+cd racingkart-analysis
+make install          # uv で依存ライブラリ導入
+```
+
+### 実行例
+
+```bash
+uv run python scripts/extract_rosbag.py \
+  ../output/20260601-234731/d1/
+
+uv run python scripts/analyze_results.py \
+  ../output/20260601-234731/d1/
+
+uv run python scripts/plot_summary.py \
+  ../output/20260601-234731/d1/
+```
+
+### ダッシュボード（6 タブ）
+
+Overview / XY Map / Speed Profile /
+Tracking / Time Series / Penalty
+
+</div>
+</div>
+
+---
+
+## Optuna 自動チューニング & 結果公開
+
+<div class="columns">
+
+<div>
+
+### Optuna による自動チューニング
+
+- **ベイズ最適化（TPE）** で MPC パラメータを自動探索
+- `racingkart-analysis/optuna/` に一式
+- 最適化目標: `avg_lap_2to6`（Lap2〜6 の平均タイム）
+- 衝突あり試行は `TrialPruned` として除外
+
+```python
+# 探索パラメータ例
+v_max:        [20.0, 30.0]
+ay_max:       [6.5,  12.0]
+Q[2]:         [1e5,  2e6]   (log scale)
+wp_id_offset: [1, 4]
+```
+
+</div>
+
+<div>
+
+### 結果の公開（GitHub Pages）
+
+```bash
+# Optuna 結果を JSON に出力
+uv run python scripts/generate_optuna_report.py ...
+
+# racingkart-results に push → Pages 自動更新
+uv run python scripts/publish_results.py \
+  --study output/optuna_mpc/reports/study.json
+```
+
+### 公開先 URL
+
+| リポジトリ | URL |
+|---|---|
+| racingkart-analysis | https://pathfinders-lab.github.io/racingkart-analysis/ |
+| racingkart-results | https://keigo06.github.io/racingkart-results/ |
+
+</div>
+</div>
+
+---
+
 ## GPU / CPU の切り替え
 
 `.env` の `COMPOSE_FILE` で選択します。
