@@ -73,16 +73,40 @@ dev: simulator autoware-simulator
 	@echo "To stop: make down  (docker compose down --remove-orphans)"
 
 # 6 measured laps on dev image (runs 7 laps; records /mpc/stats; no d1-result-details.json)
+# Blocks until AWSIM finishes, then runs make down + make analyze automatically.
 trial: SIM_MODE := trial
 trial: simulator autoware-simulator
-	@echo "Start trial run (7 laps, 6 measured — trial AWSIM, dev Autoware)"
-	@echo "To stop: make down  (docker compose down --remove-orphans)"
+	@echo "[trial] AWSIM started (7 laps, ~10 min). Waiting for completion..."
+	docker compose wait simulator
+	$(MAKE) down
+	@OUTPUT="output/$(TIMESTAMP)/d1"; \
+	if (cd racingkart-analysis && make analyze OUTPUT="../$${OUTPUT}" COMMAND=trial LAPS=6); then \
+	    echo "[trial] Done."; \
+	else \
+	    echo ""; \
+	    echo "[trial] ERROR: analyze failed. Your data is saved at: $${OUTPUT}"; \
+	    echo "  Retry: cd racingkart-analysis && make analyze OUTPUT=\"../$${OUTPUT}\" COMMAND=trial LAPS=6"; \
+	    echo "  Docs:  racingkart-analysis/docs/ops/fly-mlflow-setup.md"; \
+	    exit 1; \
+	fi
 
 # 2 measured laps on dev image (runs 3 laps; records /mpc/stats; quick exploration)
+# Blocks until AWSIM finishes, then runs make down + make analyze automatically.
 trial-quick: SIM_MODE := trial-quick
 trial-quick: simulator autoware-simulator
-	@echo "Start trial-quick run (3 laps, 2 measured — trial-quick AWSIM, dev Autoware)"
-	@echo "To stop: make down  (docker compose down --remove-orphans)"
+	@echo "[trial-quick] AWSIM started (3 laps, ~5 min). Waiting for completion..."
+	docker compose wait simulator
+	$(MAKE) down
+	@OUTPUT="output/$(TIMESTAMP)/d1"; \
+	if (cd racingkart-analysis && make analyze OUTPUT="../$${OUTPUT}" COMMAND=trial-quick LAPS=2); then \
+	    echo "[trial-quick] Done."; \
+	else \
+	    echo ""; \
+	    echo "[trial-quick] ERROR: analyze failed. Your data is saved at: $${OUTPUT}"; \
+	    echo "  Retry: cd racingkart-analysis && make analyze OUTPUT=\"../$${OUTPUT}\" COMMAND=trial-quick LAPS=2"; \
+	    echo "  Docs:  racingkart-analysis/docs/ops/fly-mlflow-setup.md"; \
+	    exit 1; \
+	fi
 
 dev2: SIM_MODE := dev2
 dev3: SIM_MODE := dev3
