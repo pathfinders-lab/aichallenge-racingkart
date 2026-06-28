@@ -19,7 +19,7 @@ exec timeout 800 "$AWSIM_DIRECTORY/AWSIM.x86_64" \
     --sound off \
     --collisions on \
     --handicap off \
-    --wall-recovery off \
+    --wall-recovery on \
     --ranking off \
     --camera off \
     --lidar off \
