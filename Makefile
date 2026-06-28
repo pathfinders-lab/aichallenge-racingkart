@@ -74,10 +74,15 @@ dev: simulator autoware-simulator
 
 # 6 measured laps on dev image (runs 7 laps; records /mpc/stats; no d1-result-details.json)
 # Blocks until AWSIM finishes, then runs make down + make analyze automatically.
+# Exit 0 = all laps done; exit 124 = AWSIM --timeout fired (normal); other = crash (stop).
 trial: SIM_MODE := trial
 trial: simulator autoware-simulator
 	@echo "[trial] AWSIM started (7 laps, ~10 min). Waiting for completion..."
-	docker compose wait simulator  # if AWSIM crashes, this exits non-zero; run 'make down' manually
+	@docker compose wait simulator; sim_exit=$$?; \
+	if [ "$$sim_exit" -ne 0 ] && [ "$$sim_exit" -ne 124 ]; then \
+	    echo "[trial] ERROR: AWSIM crashed (exit $$sim_exit). Run 'make down' manually."; \
+	    exit "$$sim_exit"; \
+	fi
 	$(MAKE) down
 	@OUTPUT="output/$(TIMESTAMP)/d1"; \
 	if (cd racingkart-analysis && make analyze OUTPUT="../$${OUTPUT}" COMMAND=trial LAPS=6); then \
@@ -92,10 +97,15 @@ trial: simulator autoware-simulator
 
 # 2 measured laps on dev image (runs 3 laps; records /mpc/stats; quick exploration)
 # Blocks until AWSIM finishes, then runs make down + make analyze automatically.
+# Exit 0 = all laps done; exit 124 = AWSIM --timeout fired (normal); other = crash (stop).
 trial-quick: SIM_MODE := trial-quick
 trial-quick: simulator autoware-simulator
 	@echo "[trial-quick] AWSIM started (3 laps, ~5 min). Waiting for completion..."
-	docker compose wait simulator  # if AWSIM crashes, this exits non-zero; run 'make down' manually
+	@docker compose wait simulator; sim_exit=$$?; \
+	if [ "$$sim_exit" -ne 0 ] && [ "$$sim_exit" -ne 124 ]; then \
+	    echo "[trial-quick] ERROR: AWSIM crashed (exit $$sim_exit). Run 'make down' manually."; \
+	    exit "$$sim_exit"; \
+	fi
 	$(MAKE) down
 	@OUTPUT="output/$(TIMESTAMP)/d1"; \
 	if (cd racingkart-analysis && make analyze OUTPUT="../$${OUTPUT}" COMMAND=trial-quick LAPS=2); then \
