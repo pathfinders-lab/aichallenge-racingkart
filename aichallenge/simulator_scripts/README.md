@@ -29,8 +29,8 @@ make eval → run_evaluation.bash → evaluation.launch.xml
 | スクリプト | 用途 | 引数 | 主な設定 |
 |---|---|---|---|
 | `eval.sh` | 評価 | - | 1台 / 6 laps / 600s / sync開始 / handicap・wall-recovery・ranking off |
-| `trial.sh` | 開発計測（`make trial`） | - | 1台 / **7 laps** / count開始 / `/mpc/stats` 記録あり |
-| `trial-quick.sh` | 開発探索（`make trial-quick`） | - | 1台 / **3 laps** / count開始 / `/mpc/stats` 記録あり |
+| `trial.sh` | 開発計測（`make trial`） | - | 1台 / **7 laps** / 600s / count開始 / wall-recovery on / `/mpc/stats` 記録あり |
+| `trial-quick.sh` | 開発探索（`make trial-quick`） | - | 1台 / **3 laps** / 200s / count開始 / wall-recovery on / `/mpc/stats` 記録あり |
 | `dev.sh` | 開発 | 車両数 N（既定 1） | unlimited laps・timeout / count開始 / wall-recovery on / handicap・ranking off |
 | `parallel.sh` | 複数台レース | - | 3台 / 6 laps / 600s / sync開始 / handicap・wall-recovery・ranking on |
 | `gate.sh` | Safety Gate テスト | テスト番号 1/2/3/all（既定 all） | 1台。all は test1〜3 を順次実行 |

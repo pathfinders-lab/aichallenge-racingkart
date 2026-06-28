@@ -1,12 +1,12 @@
-# multi_purpose_mpc_ros インテグレーション設計
+# multi_purpose_mpc_ros_custom インテグレーション設計
 
-> 仕様ドキュメント（現仕様の正）。最終確認: 2026-06-14。文書運用方針は [docs/README.md](../README.md) を参照。
+> 仕様ドキュメント（現仕様の正）。最終確認: 2026-06-28。文書運用方針は [docs/README.md](../README.md) を参照。
 
 作成日: 2026-02-10
 
 ## 概要
 
-`multi_purpose_mpc_ros` は `aichallenge_submit` に統合済み。`reference.launch.xml` の `control_method` 引数で `mpc` / `pure_pursuit` / `tiny_lidar_net` / `pilot_net` / `joycon` を切り替えられる。デフォルトは `mpc`。
+`multi_purpose_mpc_ros_custom` は `aichallenge_submit` に統合済み。`reference.launch.xml` の `control_method` 引数で `mpc` / `pure_pursuit` / `tiny_lidar_net` / `pilot_net` / `joycon` を切り替えられる。デフォルトは `mpc`。
 
 ## 現在のアーキテクチャ
 
@@ -157,7 +157,7 @@ MPC コントローラは独自の参照パスと occupancy grid map を持ち�
 
 ### パッケージ配置
 
-`multi_purpose_mpc_ros` と `multi_purpose_mpc_ros_msgs` はすでに `aichallenge_submit/` 配下に存在する。手動でのクローンや移動は不要。
+`multi_purpose_mpc_ros_custom` と `multi_purpose_mpc_ros_msgs` はすでに `aichallenge_submit/` 配下に存在する。手動でのクローンや移動は不要。
 
 ```
 aichallenge/workspace/src/aichallenge_submit/
@@ -165,7 +165,7 @@ aichallenge/workspace/src/aichallenge_submit/
 ├── simple_pure_pursuit/
 ├── simple_trajectory_generator/
 ├── tiny_lidar_net_controller/
-├── multi_purpose_mpc_ros/          # ← 統合済み
+├── multi_purpose_mpc_ros_custom/   # ← 統合済み
 ├── multi_purpose_mpc_ros_msgs/     # ← 統合済み
 └── ...（その他既存パッケージ）
 ```
@@ -187,7 +187,7 @@ make autoware-build
 
 ビルドで行われること:
 1. `multi_purpose_mpc_ros_msgs` のメッセージ型生成（`AckermannControlBoostCommand.msg`, `PathConstraints.msg`, `BorderCells.msg`）
-2. `multi_purpose_mpc_ros` のビルド:
+2. `multi_purpose_mpc_ros_custom` のビルド:
    - C++ ライブラリ/ノード（`boost_commander`）のビルド
    - Python venv の作成（`/usr/bin/python3 -m venv`）
    - `requirements.txt` からの pip install（`numpy`, `pandas`, `matplotlib`, `osqp`, `scikit-image`, `PyYAML`）
@@ -197,14 +197,14 @@ make autoware-build
 ```
 autoware_auto_control_msgs（Autoware underlay に存在）
   → multi_purpose_mpc_ros_msgs
-    → multi_purpose_mpc_ros
+    → multi_purpose_mpc_ros_custom
 ```
 
 colcon が自動解決するため、特別な指定は不要。
 
 ### config.yaml の確認・調整
 
-MPC の config ファイル: `multi_purpose_mpc_ros/config/config.yaml`
+MPC の config ファイル: `multi_purpose_mpc_ros_custom/multi_purpose_mpc_ros_custom/config/config.yaml`
 
 | 設定項目 | 現在の値 | 確認事項 |
 |---------|---------|---------|
@@ -269,7 +269,7 @@ tar tf submit/aichallenge_submit.tar.gz | grep multi_purpose_mpc
 
 以下のエントリが含まれていれば OK:
 ```
-aichallenge_submit/multi_purpose_mpc_ros/
+aichallenge_submit/multi_purpose_mpc_ros_custom/
 aichallenge_submit/multi_purpose_mpc_ros_msgs/
 ```
 
@@ -277,7 +277,7 @@ aichallenge_submit/multi_purpose_mpc_ros_msgs/
 
 | ファイル | 内容 |
 |---------|------|
-| `aichallenge_submit/multi_purpose_mpc_ros/` | 統合済み（in-tree） |
+| `aichallenge_submit/multi_purpose_mpc_ros_custom/` | 統合済み（in-tree） |
 | `aichallenge_submit/multi_purpose_mpc_ros_msgs/` | 統合済み（in-tree） |
 | `reference.launch.xml` | `control_method` 引数（デフォルト `mpc`）、各コントローラを `<include control/<name>.launch.xml>` で起動 |
 
@@ -349,7 +349,7 @@ s_m, x_m, y_m, psi_rad, kappa_radpm, vx_mps, ax_mps2
 
 ### Step 3: env/ ディレクトリへの配置
 
-生成したファイルを `multi_purpose_mpc_ros/env/<バージョン名>/` に配置し、`config.yaml` のパスを更新する。
+生成したファイルを `multi_purpose_mpc_ros_custom/multi_purpose_mpc_ros_custom/env/<バージョン名>/` に配置し、`config.yaml` のパスを更新する。
 
 ```yaml
 # config.yaml
@@ -378,7 +378,7 @@ env/
 `env/create_waypoints.py` を使うと、occupancy grid map を GUI で表示しマウスクリックでウェイポイントを打てる。軌跡最適化ツールの入力用。
 
 ```bash
-cd multi_purpose_mpc_ros/env/<バージョン名>   # 例: final_ver3（occupancy_grid_map.yaml を含む版を選ぶ）
+cd multi_purpose_mpc_ros_custom/multi_purpose_mpc_ros_custom/env/<バージョン名>   # 例: final_ver3（occupancy_grid_map.yaml を含む版を選ぶ）
 python3 ../create_waypoints.py               # 要: matplotlib, pyyaml
 ```
 
@@ -451,7 +451,7 @@ reference_path:
 
 ### 提出ファイルへの影響
 
-`create_submit_file.bash` で `aichallenge_submit` 以下を tar.gz にまとめるため、`multi_purpose_mpc_ros` と `multi_purpose_mpc_ros_msgs` が `aichallenge_submit/` 配下にある必要がある。
+`create_submit_file.bash` で `aichallenge_submit` 以下を tar.gz にまとめるため、`multi_purpose_mpc_ros_custom` と `multi_purpose_mpc_ros_msgs` が `aichallenge_submit/` 配下にある必要がある。
 
 ## まとめ
 
@@ -463,5 +463,5 @@ reference_path:
 | トピック互換 | 入出力ともに一致、リマップ不要 |
 | 経路参照 | MPC: 独自 CSV / Pure Pursuit: `simple_trajectory_generator` |
 | MPC 起動方式 | `<include control/mpc.launch.xml>` 経由（インライン node ではない） |
-| パッケージ配置 | `aichallenge_submit/` 配下に統合済み（追加作業不要） |
+| パッケージ配置 | `aichallenge_submit/multi_purpose_mpc_ros_custom/` 配下に統合済み（追加作業不要） |
 | ビルド注意 | Python venv 作成（pip install）によるビルド時間増加 |
