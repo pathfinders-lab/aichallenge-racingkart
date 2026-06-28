@@ -77,7 +77,7 @@ dev: simulator autoware-simulator
 trial: SIM_MODE := trial
 trial: simulator autoware-simulator
 	@echo "[trial] AWSIM started (7 laps, ~10 min). Waiting for completion..."
-	docker compose wait simulator
+	docker compose wait simulator  # if AWSIM crashes, this exits non-zero; run 'make down' manually
 	$(MAKE) down
 	@OUTPUT="output/$(TIMESTAMP)/d1"; \
 	if (cd racingkart-analysis && make analyze OUTPUT="../$${OUTPUT}" COMMAND=trial LAPS=6); then \
@@ -95,7 +95,7 @@ trial: simulator autoware-simulator
 trial-quick: SIM_MODE := trial-quick
 trial-quick: simulator autoware-simulator
 	@echo "[trial-quick] AWSIM started (3 laps, ~5 min). Waiting for completion..."
-	docker compose wait simulator
+	docker compose wait simulator  # if AWSIM crashes, this exits non-zero; run 'make down' manually
 	$(MAKE) down
 	@OUTPUT="output/$(TIMESTAMP)/d1"; \
 	if (cd racingkart-analysis && make analyze OUTPUT="../$${OUTPUT}" COMMAND=trial-quick LAPS=2); then \
