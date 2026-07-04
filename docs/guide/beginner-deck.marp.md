@@ -41,7 +41,7 @@ style: |
 - 開発実行 (`make dev`) / 計測 (`make trial`) / 評価実行 (`make eval`) を使い分けられる
 - 実行ログを `output/` に整理し、提出物を `submit/` に作れる
 - 走行データを解析・可視化し、Optuna で MPC パラメータを自動最適化できる（`racingkart-analysis/`）
-- `make trial` の結果を全員で比較できる Web ダッシュボードを自動更新（Cloudflare Pages）
+- `make trial` 1コマンドで走行計測からダッシュボード反映まで自動完結（Cloudflare Pages）
 - シミュレータ運用から実車補助 (`vehicle/`, `remote/`) まで周辺ツールが揃っている
 
 ---
@@ -199,21 +199,18 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 
 ---
 
-## チューニングフロー（make trial → 解析）
+## チューニングフロー（make trial → ダッシュボード）
 
 <div class="columns">
 
 <div>
 
 ### 手順
-1. `make trial` を実行（6 周計測・rosbag 収録）
-2. `racingkart-analysis/` で解析・MLflow 記録
-   ```bash
-   cd racingkart-analysis
-   make analyze OUTPUT=../output/<timestamp>/d1/ COMMAND=trial LAPS=6
-   ```
-3. 結果ダッシュボードに自動反映（`gh` 認証済みなら即時、未認証は1時間以内）
+1. `make trial` を実行（6 周計測 → 解析 → MLflow 記録 まで自動）
+2. 結果ダッシュボードに自動反映（`gh` 認証済みなら即時、未認証は1時間以内）
    → https://racingkart-results.pages.dev
+
+**1コマンドで完結。** `make analyze` の手動実行は不要。
 
 </div>
 
@@ -228,7 +225,7 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 | MPC stats 記録 | なし | あり | あり |
 | eval イメージ | 不要 | 不要 | 不要 |
 
-`make analyze` でダッシュボードまで自動連携（MLflow 記録 + 1 時間ごとに Pages へ同期）
+`make trial-quick` も同様に1コマンドでダッシュボードまで自動連携
 
 </div>
 </div>
