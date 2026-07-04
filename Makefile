@@ -86,7 +86,7 @@ trial: simulator autoware-simulator
 	@$(MAKE) --no-print-directory -s down 2>/dev/null
 	@OUTPUT="output/$(TIMESTAMP)/d1"; \
 	if (cd racingkart-analysis && make --no-print-directory analyze OUTPUT="../$${OUTPUT}" COMMAND=trial LAPS=6); then \
-	    echo "[trial] Done. → https://racingkart-results.pages.dev"; \
+	    echo "[trial] Done. → https://racingkart-results.pages.dev/runs/"; \
 	else \
 	    echo ""; \
 	    echo "[trial] ERROR: analyze failed. Your data is saved at: $${OUTPUT}"; \
@@ -109,7 +109,7 @@ trial-quick: simulator autoware-simulator
 	@$(MAKE) --no-print-directory -s down 2>/dev/null
 	@OUTPUT="output/$(TIMESTAMP)/d1"; \
 	if (cd racingkart-analysis && make --no-print-directory analyze OUTPUT="../$${OUTPUT}" COMMAND=trial-quick LAPS=2); then \
-	    echo "[trial-quick] Done. → https://racingkart-results.pages.dev"; \
+	    echo "[trial-quick] Done. → https://racingkart-results.pages.dev/runs/"; \
 	else \
 	    echo ""; \
 	    echo "[trial-quick] ERROR: analyze failed. Your data is saved at: $${OUTPUT}"; \
