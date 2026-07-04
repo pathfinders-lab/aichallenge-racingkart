@@ -86,7 +86,7 @@ trial: simulator autoware-simulator
 	$(MAKE) down
 	@OUTPUT="output/$(TIMESTAMP)/d1"; \
 	if (cd racingkart-analysis && make analyze OUTPUT="../$${OUTPUT}" COMMAND=trial LAPS=6); then \
-	    echo "[trial] Done."; \
+	    echo "[trial] Done. → https://racingkart-results.pages.dev"; \
 	else \
 	    echo ""; \
 	    echo "[trial] ERROR: analyze failed. Your data is saved at: $${OUTPUT}"; \
@@ -109,7 +109,7 @@ trial-quick: simulator autoware-simulator
 	$(MAKE) down
 	@OUTPUT="output/$(TIMESTAMP)/d1"; \
 	if (cd racingkart-analysis && make analyze OUTPUT="../$${OUTPUT}" COMMAND=trial-quick LAPS=2); then \
-	    echo "[trial-quick] Done."; \
+	    echo "[trial-quick] Done. → https://racingkart-results.pages.dev"; \
 	else \
 	    echo ""; \
 	    echo "[trial-quick] ERROR: analyze failed. Your data is saved at: $${OUTPUT}"; \
