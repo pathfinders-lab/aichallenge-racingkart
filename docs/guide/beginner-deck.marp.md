@@ -41,6 +41,7 @@ style: |
 - 開発実行 (`make dev`) / 計測 (`make trial`) / 評価実行 (`make eval`) を使い分けられる
 - 実行ログを `output/` に整理し、提出物を `submit/` に作れる
 - 走行データを解析・可視化し、Optuna で MPC パラメータを自動最適化できる（`racingkart-analysis/`）
+- `make trial` の結果を全員で比較できる Web ダッシュボードを自動更新（Cloudflare Pages）
 - シミュレータ運用から実車補助 (`vehicle/`, `remote/`) まで周辺ツールが揃っている
 
 ---
@@ -206,14 +207,13 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 
 ### 手順
 1. `make trial` を実行（6 周計測・rosbag 収録）
-2. `racingkart-analysis/` で解析
+2. `racingkart-analysis/` で解析・MLflow 記録
    ```bash
    cd racingkart-analysis
-   uv run python scripts/extract_rosbag.py ../output/<timestamp>/d1/
-   uv run python scripts/analyze_results.py ../output/<timestamp>/d1/
-   uv run python scripts/plot_summary.py    ../output/<timestamp>/d1/
+   make analyze OUTPUT=../output/<timestamp>/d1/ COMMAND=trial LAPS=6
    ```
-3. `summary_*.html` をブラウザで開いて確認
+3. 15 分以内に結果ダッシュボードに自動反映
+   → https://racingkart-results.pages.dev
 
 </div>
 
@@ -227,6 +227,8 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 | 周回数 | 無制限 | 2周（3周走行） | 6周（7周走行） |
 | MPC stats 記録 | なし | あり | あり |
 | eval イメージ | 不要 | 不要 | 不要 |
+
+`make analyze` でダッシュボードまで自動連携（MLflow 記録 + 15 分ごとに Pages へ同期）
 
 </div>
 </div>
@@ -269,7 +271,8 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 - 最適化対象: MPC コスト行列（Q, QN, R）
 
 ### チームの最新結果
-https://pathfinders-lab.github.io/racingkart-results/
+https://racingkart-results.pages.dev
+（Optuna 最適化 + trial run 比較テーブル）
 
 </div>
 </div>
