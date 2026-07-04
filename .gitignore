@@ -28,3 +28,4 @@ docs/plan/
 
 # Superpowers session state (local only)
 .superpowers/
+result-*.json
