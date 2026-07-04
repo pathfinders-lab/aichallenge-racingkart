@@ -212,7 +212,7 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
    cd racingkart-analysis
    make analyze OUTPUT=../output/<timestamp>/d1/ COMMAND=trial LAPS=6
    ```
-3. 15 分以内に結果ダッシュボードに自動反映
+3. 結果ダッシュボードに自動反映（`gh` 認証済みなら即時、未認証は1時間以内）
    → https://racingkart-results.pages.dev
 
 </div>
@@ -228,7 +228,7 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 | MPC stats 記録 | なし | あり | あり |
 | eval イメージ | 不要 | 不要 | 不要 |
 
-`make analyze` でダッシュボードまで自動連携（MLflow 記録 + 15 分ごとに Pages へ同期）
+`make analyze` でダッシュボードまで自動連携（MLflow 記録 + 1 時間ごとに Pages へ同期）
 
 </div>
 </div>
