@@ -212,6 +212,8 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 
 **1コマンドで完結。** `make analyze` の手動実行は不要。
 
+> 即時反映には `gh auth login` が必要（未認証でも1時間以内に自動同期）
+
 </div>
 
 <div>
