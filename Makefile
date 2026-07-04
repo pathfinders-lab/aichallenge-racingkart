@@ -38,7 +38,7 @@ autoware-vehicle:
 # run autoware for simulator
 autoware-simulator:
 	@echo "Start Autoware for AWSIM"
-	LOG_DIR=$(LOG_DIR) RUN_MODE=awsim docker compose up -d autoware
+	@LOG_DIR=$(LOG_DIR) RUN_MODE=awsim docker compose up -d autoware 2>/dev/null
 
 # autoware command service use ROS_DOMAIN_ID from .env
 autoware-request-initialpose:
@@ -57,7 +57,7 @@ awsim-request-reset:
 # run simulator (docker compose up -d simulator)
 simulator:
 	@echo "Start AWSIM (SIM_MODE=$(SIM_MODE))"
-	LOG_DIR=$(LOG_DIR) SIM_MODE="$(SIM_MODE)" ROS_DOMAIN_ID=0 docker compose up -d simulator
+	@LOG_DIR=$(LOG_DIR) SIM_MODE="$(SIM_MODE)" ROS_DOMAIN_ID=0 docker compose up -d simulator 2>/dev/null
 
 # racing kart (docker compose up -d driver)
 driver:
@@ -78,15 +78,15 @@ dev: simulator autoware-simulator
 trial: SIM_MODE := trial
 trial: simulator autoware-simulator
 	@echo "[trial] AWSIM started (7 laps, ~10 min). Waiting for completion..."
-	@docker compose wait simulator; sim_exit=$$?; \
+	@docker compose wait simulator > /dev/null 2>&1; sim_exit=$$?; \
 	if [ "$$sim_exit" -ne 0 ] && [ "$$sim_exit" -ne 124 ]; then \
 	    echo "[trial] ERROR: AWSIM crashed (exit $$sim_exit). Run 'make down' manually."; \
 	    exit "$$sim_exit"; \
 	fi
-	$(MAKE) down
+	@$(MAKE) --no-print-directory -s down 2>/dev/null
 	@OUTPUT="output/$(TIMESTAMP)/d1"; \
-	if (cd racingkart-analysis && make analyze OUTPUT="../$${OUTPUT}" COMMAND=trial LAPS=6); then \
-	    echo "[trial] Done."; \
+	if (cd racingkart-analysis && make --no-print-directory analyze OUTPUT="../$${OUTPUT}" COMMAND=trial LAPS=6); then \
+	    echo "[trial] Done. → https://racingkart-results.pages.dev/runs/"; \
 	else \
 	    echo ""; \
 	    echo "[trial] ERROR: analyze failed. Your data is saved at: $${OUTPUT}"; \
@@ -101,15 +101,15 @@ trial: simulator autoware-simulator
 trial-quick: SIM_MODE := trial-quick
 trial-quick: simulator autoware-simulator
 	@echo "[trial-quick] AWSIM started (3 laps, ~5 min). Waiting for completion..."
-	@docker compose wait simulator; sim_exit=$$?; \
+	@docker compose wait simulator > /dev/null 2>&1; sim_exit=$$?; \
 	if [ "$$sim_exit" -ne 0 ] && [ "$$sim_exit" -ne 124 ]; then \
 	    echo "[trial-quick] ERROR: AWSIM crashed (exit $$sim_exit). Run 'make down' manually."; \
 	    exit "$$sim_exit"; \
 	fi
-	$(MAKE) down
+	@$(MAKE) --no-print-directory -s down 2>/dev/null
 	@OUTPUT="output/$(TIMESTAMP)/d1"; \
-	if (cd racingkart-analysis && make analyze OUTPUT="../$${OUTPUT}" COMMAND=trial-quick LAPS=2); then \
-	    echo "[trial-quick] Done."; \
+	if (cd racingkart-analysis && make --no-print-directory analyze OUTPUT="../$${OUTPUT}" COMMAND=trial-quick LAPS=2); then \
+	    echo "[trial-quick] Done. → https://racingkart-results.pages.dev/runs/"; \
 	else \
 	    echo ""; \
 	    echo "[trial-quick] ERROR: analyze failed. Your data is saved at: $${OUTPUT}"; \
