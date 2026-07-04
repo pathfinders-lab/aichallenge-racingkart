@@ -208,7 +208,7 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 ### 手順
 1. `make trial` を実行（6 周計測 → 解析 → MLflow 記録 まで自動）
 2. 結果ダッシュボードに自動反映（`gh` 認証済みなら即時、未認証は1時間以内）
-   → https://racingkart-results.pages.dev
+   → https://racingkart-results.pages.dev/runs/
 
 **1コマンドで完結。** `make analyze` の手動実行は不要。
 
@@ -270,8 +270,8 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 - 最適化対象: MPC コスト行列（Q, QN, R）
 
 ### チームの最新結果
-https://racingkart-results.pages.dev
-（Optuna 最適化 + trial run 比較テーブル）
+https://racingkart-results.pages.dev/runs/
+（trial run 比較テーブル・詳細グラフリンク付き）
 
 </div>
 </div>
