@@ -241,22 +241,21 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 <div>
 
 ### 手順
-1. `racingkart-analysis/` から実行（シミュレータ起動・停止は自動）
+1. 最適化を実行（シミュレータ起動・MLflow記録・Pages公開まで自動）
    ```bash
-   uv run python optuna/optuna_mpc_tuning.py \
-     --study-name mpc-q4 --n-trials 60
+   make optuna STUDY=mpc-q4 N=60
    ```
-2. 別ターミナルで進捗をリアルタイム確認
+2. 完了後、best params を config.yaml に適用
    ```bash
+   make optuna-apply STUDY=mpc-q4
+   # → diff 確認後 make trial で検証
+   ```
+3. 進捗をリアルタイム確認したい場合（別ターミナル）
+   ```bash
+   cd racingkart-analysis
    uv run optuna-dashboard \
      sqlite:///output/optuna_mpc/mpc_tuning.db
    # → http://localhost:8080
-   ```
-3. 完了後に JSON レポートを生成（GitHub Pages 公開用）
-   ```bash
-   uv run python scripts/generate_optuna_report.py \
-     --study-name mpc-q4 \
-     --storage sqlite:///output/optuna_mpc/mpc_tuning.db
    ```
 
 </div>
@@ -268,10 +267,12 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 - **ベイズ最適化（TPE）** で効率的に収束
 - 同じ `--study-name` で途中再開可能
 - 最適化対象: MPC コスト行列（Q, QN, R）
+- 各 trial の結果は MLflow に自動記録 → Pages に反映
 
 ### チームの最新結果
-https://racingkart-results.pages.dev/runs/
-（trial run 比較テーブル・詳細グラフリンク付き）
+- Dashboard: https://racingkart-results.pages.dev/
+- Runs 比較: https://racingkart-results.pages.dev/runs/
+- Studies: https://racingkart-results.pages.dev/studies/
 
 </div>
 </div>
