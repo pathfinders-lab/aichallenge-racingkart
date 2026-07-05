@@ -2,7 +2,7 @@
 SHELL := /bin/bash
 
 .PHONY: autoware-build autoware-vehicle autoware-simulator autoware-request-initialpose autoware-request-control  awsim-request-start awsim-request-reset autoware-driver-zenoh autoware-driver-zenoh-rosbag trial trial-quick \
-	simulator dev dev2 dev3 dev4 driver zenoh download rviz2 down down_all ps autoware-attach autoware-bash eval
+	simulator dev dev2 dev3 dev4 driver zenoh download rviz2 down down_all ps autoware-attach autoware-bash eval optuna optuna-apply
 
 # Used by docker-compose.yml for build/eval artifact ownership.
 HOST_UID ?= $(shell id -u)
@@ -179,6 +179,18 @@ autoware-attach:
 
 autoware-bash:
 	CMD="bash --rcfile /etc/skel/.bashrc -i" docker compose run --rm --no-deps autoware-command
+
+# Optuna MPC parameter tuning → MLflow → Pages
+# Usage: make optuna STUDY=mpc-q4 N=60
+STUDY    ?= mpc-q4
+N        ?= 60
+optuna:
+	@cd racingkart-analysis && $(MAKE) --no-print-directory optuna STUDY=$(STUDY) N=$(N)
+
+# Apply best Optuna trial params to main config.yaml
+# Usage: make optuna-apply STUDY=mpc-q4
+optuna-apply:
+	@cd racingkart-analysis && $(MAKE) --no-print-directory optuna-apply STUDY=$(STUDY)
 
 # Download submission data by asking for credentials interactively
 # Usage:
