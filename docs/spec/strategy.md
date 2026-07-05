@@ -1,6 +1,6 @@
 # 自動運転AIチャレンジ（レーシングカート SW部門）戦略文書
 
-> 仕様ドキュメント（現仕様の正）。最終確認: 2026-06-21。文書運用方針は [docs/README.md](../README.md) を参照。
+> 仕様ドキュメント（現仕様の正）。最終確認: 2026-07-05。文書運用方針は [docs/README.md](../README.md) を参照。
 
 ## 目次
 
@@ -229,7 +229,7 @@ env/final_ver3/traj_mincurv.csv
 | 平均間隔 | 約0.6 m |
 | 占有格子地図 | `env/final_ver3/occupancy_grid_map.yaml`（0.1 m/セル解像度） |
 
-**要確認（2026-07-05時点）:** `env/` には `final_ver4` まで存在するが、`config.yaml` は依然として `final_ver3` を指している。4バージョンを比較したところ、地図（occupancy grid map）自体は `final`/`final_ver2` と `final_ver3`/`final_ver4` の2世代のみで、コース形状は共通。走行ラインの最小旋回半径は `final`(3.49m) → `final_ver2`(3.00m) → `final_ver3`(2.57m) → `final_ver4`(2.25m) と、バージョンを重ねるごとにヘアピンを攻めたタイトなラインへ再最適化されている。`final_ver4` に更新するか、`final_ver3` を意図的に使い続けているのか要確認。
+**更新（2026-07-05）:** `multi_purpose_mpc_ros_custom` PR #4 にて `config.yaml` が `final_ver4` に移行済み。地図（occupancy grid map）と軌跡CSV（`traj_mincurv.csv`）の両方が `final_ver4` を指している。走行ラインの最小旋回半径は `final`(3.49m) → `final_ver2`(3.00m) → `final_ver3`(2.57m) → `final_ver4`(2.25m) と、ヘアピンを攻めたタイトなラインへ段階的に最適化されている。
 
 #### 利用可能な他の経路
 
@@ -295,10 +295,10 @@ MPC（経路幅制約として自動的に回避行動を生成）
 
 | 設定名 | v_max | ay_max | Lap1 | Lap2 |
 |--------|-------|--------|------|------|
-| 究極 | 30 km/h | 12.0 m/s² | 53 s | 47 s |
+| **究極（現在）** | **30 km/h** | **12.0 m/s²** | **53 s** | **47 s** |
 | 高速（gnss delay 0.3s） | 30 km/h | 9.5 m/s² | 55 s | 49 s |
 | 中高速 | 25 km/h | 7.0 m/s² | 59 s | 54 s |
-| **中速（現在）** | **20 km/h** | **6.5 m/s²** | **67 s** | **64 s** |
+| 中速 | 20 km/h | 6.5 m/s² | 67 s | 64 s |
 | 低速 | 15 km/h | 5.5 m/s² | 86 s | — |
 
 「究極」設定と「現在」設定では **1周あたり約17〜20秒の差**がある。6周レースでは最大**2分以上の差**が生じうる。
@@ -819,42 +819,31 @@ Phase 4（余裕があれば）: Playwright による自動提出（完全自動
 
 ### 7.1 waypoint探索のロバスト性（ループジャンプ対策）
 
-**新規発見（2026-07-05）。未実装。**
+**実装済み（2026-07-05、`multi_purpose_mpc_ros_custom` PR #4）。**
 
 #### 問題の本質
 
-`spatial_bicycle_models.py:293-307` の `get_closest_waypoint(x, y)` は、コース全waypoint（約350点）に対する**グローバル最近傍探索**（`np.argmin(distances)`）。`update_states()`（毎制御ステップ、40Hz）から呼ばれる。
+`spatial_bicycle_models.py` の `get_closest_waypoint()` は、コース全waypoint（約350点）に対するグローバル最近傍探索が初期実装だった。コースが `circular: true` の閉ループでヘアピンのように弧長では遠いが空間的に近い区間が存在すると、`wp_id`/`s` が不連続にジャンプしうる。
 
-コースが `circular: true` の閉ループであり、かつヘアピンのように**弧長では遠いが空間的には近い**区間が存在する場合、車両が大きく乖離した瞬間にこの探索が「本来追従すべき区間」ではなく「たまたま空間的に近い別区間」の waypoint を誤って選び、`wp_id`/`s` が不連続にジャンプしうる。
-
-#### 現在のコースでの実害確認
-
-`final_ver3`（現行）のトラジェクトリを幾何解析した結果、以下の近接区間が実在する:
+#### 現在のコースでの近接区間（`final_ver4`）
 
 | 区間 | 弧長差 | 空間距離 |
 |---|---|---|
-| s=89 付近 ⇔ s=151 付近（ヘアピン内側） | 62m | **8.5m** |
+| s=89 付近 ⇔ s=151 付近（ヘアピン内側） | 62m | 8.5m |
 | s=125 付近 ⇔ s=337 付近 | 137m | 9.5m |
-
-`final_ver4` は最小旋回半径がさらに小さく（2.25m）、同種の近接区間の空間距離も同程度（9.1m）。バージョンを重ねるごとにタイトなラインへ最適化されており、リスクは軽減されていない。
 
 `max_width: 6.0` / 車体幅+安全マージン(2.30m) を踏まえると、8.5〜9.5mは「コーナーで大きく膨らめば届く」距離感。
 
-**実測rosbag（直近6回のtrial、N=20・v_max=20km/h）ではこのジャンプは1件も観測されていない**（`s` の推移を確認、ラップ境界(≈349m)以外に不自然な不連続なし）。ただし現在は中速プリセットで大きな乖離が起きにくいため「起きていない」のではなく「まだ顕在化する条件に達していない」と解釈すべき。§3.1のフェーズ2・3（速度・`ay_max`引き上げ）を進めるほど、乖離量が増えてこのリスクが顕在化する可能性が高い。
-
-#### 対策案（未実装）
-
-前回の `wp_id` 近傍のみを探索し、大きく乖離した場合（初回起動時・衝突リカバリ後など）のみ全探索にフォールバックする。
+#### 実装内容（`spatial_bicycle_models.py:293-`）
 
 ```python
-def get_closest_waypoint(self, x, y, search_window=30, fallback_threshold=5.0):
+def get_closest_waypoint(self, x, y, search_window=30, fallback_threshold=5.0, force_full_search=False):
     # 1. self.wp_id を中心に ±search_window（circular考慮）だけ探索
     # 2. 最小距離が fallback_threshold 未満ならそれを採用
-    # 3. 超えていたら（トラック復帰直後などロスト状態）全waypoint探索にフォールバック
-    ...
+    # 3. 超えていたら全探索にフォールバック（初回・衝突リカバリ後）
 ```
 
-**優先度: 高。** 速度を上げる（§3.1フェーズ1以降）前の予防的修正として、他のロバスト性強化（§7.2/7.3）より先に着手する価値がある。実装コストは低い一方、`update_reference_path()`（経路切り替え時の初回探索）は従来通り全探索のままでよい点に注意（ここは有効な `wp_id` の前提がないため）。
+- 通常ステップ（`update_states()`）は窓探索。`force_full_search=True` は `update_reference_path()` 等の初回のみ。
 
 ### 7.2 ハードウェア差への対応（動的 wp_id_offset）
 
@@ -908,7 +897,7 @@ steer_low_pass_gain: 0.7
 
 ### 7.3 計算時間の監視とフォールバック
 
-**実装状況（2026-07-05確認）: `use_stats` によるログ収集（`/mpc/stats` rosbag記録）のみ実装済み。OSQP `time_limit` 設定、infeasible連続時の `v_max` 自動引き下げは未実装。**
+**実装済み（2026-07-05、`multi_purpose_mpc_ros_custom` PR #4）。** `use_stats` ログ収集に加え、OSQP `time_limit` 設定および infeasible 連続時の `v_max` 自動引き下げラダーも実装された。
 
 #### 実測データ（2026-07-05、N=20・v_max=20km/h・直近6回のtrial）
 
@@ -921,7 +910,7 @@ steer_low_pass_gain: 0.7
 | 06/28 (2) | 16.8ms | 8回 | 15644 |
 | 07/04 | 14.9ms | 5回 | 15653 |
 
-現在の `N=20` でも既に制御周期（25ms）を超過する瞬間が発生している（最大solve timeは全実行で27〜52ms）。トラブル1対策として `N` を増やす場合、この超過頻度がさらに悪化する可能性が高く、**Nを上げる前に段階的な計測（ベンチマーク）で許容上限を確認すべき**。OSQP `time_limit` 設定（本節の解決策）はこの問題を緩和する候補だが未実装。
+現在の `N=20` でも既に制御周期（25ms）を超過する瞬間が発生している（最大solve timeは全実行で27〜52ms）。`N` を増やす場合はこの超過頻度がさらに悪化する可能性が高く、Nを上げる前に段階的な計測（ベンチマーク）で許容上限を確認すべき。
 
 #### `use_stats` によるログ収集（config.yaml で有効化）
 
@@ -931,20 +920,17 @@ if self.use_stats:
     self.get_logger().info(f"INFEASIBLE_COUNT:{self.infeasible_count}")
 ```
 
-#### OSQP タイムアウトを制御周期に対する比率で設定
+#### OSQP タイムアウト（実装済み、`MPC.py:259-263`）
+
+制御周期の80%（20ms）を上限として OSQP に渡す。単発の solve が異常に長引くのを防ぐ安全網。
 
 ```python
-time_limit = 0.8 * (1.0 / self.control_rate)  # 制御周期の80%
-solver.update_settings(time_limit=time_limit)
+time_limit=0.8 * self.model.Ts  # Ts=0.025s → 20ms
 ```
 
-#### MPC infeasible 時のフォールバック
+#### MPC infeasible 時のフォールバックラダー（実装済み、`MPC.py:22-`）
 
-```
-infeasible 1回    → 安全マージン緩和（現行の5段階）
-infeasible 連続3回 → v_max を 10% 下げて再計算
-infeasible 連続5回 → v_max を 20% 下げて緊急減速
-```
+`compute_v_max_fallback_factor(infeasibility_counter)` により段階的に v_max をスケーリング。連続infeasibleが増えるほど速度を自動引き下げて安定方向に誘導する。
 
 ### 7.4 make eval での最終検証フロー
 
@@ -988,8 +974,9 @@ infeasible 連続5回 → v_max を 20% 下げて緊急減速
 | `analyze_rosbag.py` 相当 | rosbag → JSON メトリクス変換 | ~~最高~~ | **完了**（`racingkart-analysis` Phase 1） |
 | `generate_dashboard.py` 相当 | JSON → HTML ダッシュボード | ~~最高~~ | **完了**（`racingkart-analysis` + MLflow + Cloudflare Pages） |
 | Optuna 連携 | ローカルベイズ最適化の設定 | ~~高~~ | **完了**（`make optuna STUDY=... N=...` → MLflow → Pages 自動連携） |
-| **waypoint探索のロバスト化（§7.1・トラブル2）** | 近傍ウィンドウ探索+フォールバック | **最高** | 未着手（新規発見） |
-| **N/steer_rate_max のベンチマーク（トラブル1）** | 実時間予算内でのN上限計測 | **最高** | 未着手（§7.3実測データあり） |
+| **waypoint探索のロバスト化（§7.1）** | 近傍ウィンドウ探索+フォールバック | 最高 | **完了**（PR #4） |
+| **OSQP time_limit + infeasible ラダー（§7.3）** | 実時間予算内での安全網 + v_max 段階引き下げ | 最高 | **完了**（PR #4） |
+| **N/steer_rate_max のベンチマーク** | 実時間予算内でのN上限計測 | 高 | 未着手（§7.3実測データあり） |
 | 起動時ベンチマーク or タイムスタンプ補償 | solve_time 計測 → wp_id_offset 自動設定 | 高 | 未着手（§7.2） |
 
 ### 8.3 中期（〜1ヶ月・提出開始まで）
@@ -1005,12 +992,12 @@ infeasible 連続5回 → v_max を 20% 下げて緊急減速
 **優先順位の考え方（2026-07-05更新）:**
 
 ```
-1位: 土台の修正（waypoint探索ロバスト化 + N/steer_rate_maxベンチマーク）
-     → ここが壊れていると以降の効果測定自体が信用できない
-2位: レーシングライン（osm-to-raceline）とMPCパラメータの分離チューニング
+1位: 土台の修正（waypoint探索ロバスト化・OSQP安全網）→ 完了（PR #4）
+2位: N/steer_rate_max のベンチマーク（究極プリセットで超過頻度が上がる可能性）
+3位: レーシングライン（osm-to-raceline）とMPCパラメータの分離チューニング
      → 原則1（3.1章）に従い、ラインを固定してパラメータを最適化 → ライン差し替え → 再最適化
-3位: 環境差対応（動的 wp_id_offset）→ 提出前に必ず完成させる
-4位: レース戦略（アイテム収集）→ 余裕があれば対応
+4位: 環境差対応（動的 wp_id_offset）→ 提出前に必ず完成させる
+5位: レース戦略（アイテム収集）→ 余裕があれば対応
 ```
 
 ### 8.4 提出開始後のループ運用
