@@ -945,6 +945,7 @@ time_limit=0.8 * self.model.Ts  # Ts=0.025s → 20ms
 □ autoware.log で衝突回数が 0
 □ motion_analytics.html で速度プロファイルが期待通り
 □ avg_solve_ms がタイムアウト設定の 50% 以下
+□ config.yaml内の全フィーチャーフラグ（use_bearing_classifier, use_obstacle_avoidance, use_boost_acceleration等）のデフォルト値が意図通りか確認する（提出はtar.gz化時点のディスク上の値がそのまま反映されるため）
 □ ./create_submit_file.bash で tar.gz 生成・内容確認
 ```
 
