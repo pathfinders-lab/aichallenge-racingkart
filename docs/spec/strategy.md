@@ -194,10 +194,10 @@ QN: [1000000.0, 1000.0, 10000.0]       # 終端コスト
 #### 制約条件
 
 ```yaml
-v_max:           20.0 km/h   # 速度上限（現在の中速設定）
-ay_max:          6.5 m/s²    # 最大横加速度（コーナー速度制限）
+v_max:           30.0 km/h   # 速度上限（究極設定、2026-07-05切替）
+ay_max:          12.0 m/s²   # 最大横加速度（コーナー速度制限）
 delta_max_deg:   32.0 °      # ステア角上限
-steer_rate_max:  0.35 rad/s  # ステアレート上限
+steer_rate_max:  0.70 rad/s  # ステアレート上限（2026-07-05に0.35から倍増、`multi_purpose_mpc_ros_custom` PR #5）
 a_min:          -1.6 m/s²   # 最大減速度
 a_max:           0.7 m/s²   # 最大加速度
 ```
@@ -844,6 +844,8 @@ def get_closest_waypoint(self, x, y, search_window=30, fallback_threshold=5.0, f
 ```
 
 - 通常ステップ（`update_states()`）は窓探索。`force_full_search=True` は `update_reference_path()` 等の初回のみ。
+
+**訂正（2026-07-05追記）:** 究極設定+`final_ver4`での初回`make trial`（6周）実測では`penalty_count: 0`だったが、これは`racingkart-analysis`側の`penalty_count`が`d1-result-details.json`（`make eval`専用）不在時に単純に0を返すフォールバック値であり、実際の衝突判定ではなかった。`acceleration.csv`のax・angular_zを直接確認したところ、`final_ver4`最鋭コーナー（wp223, s=222.5m, kappa=-0.445, 旋回半径2.25m）で本物の壁衝突（ax急落-14〜-18 m/s²、angular_z急変-628〜+1431°/s）が複数ラップで発生していた。原因はgain補正後の実効`steer_rate_max`（0.35÷1.639≈0.2135 rad/s）がこのコーナーの急激な曲率変化に対して不足していたこと。`steer_rate_max`を0.35→0.70に倍増（`multi_purpose_mpc_ros_custom` PR #5）で解決し、再実測では6周とも衝突なし・avg_lap_2to6=52.005sで安定した。`ref_vel.yaml`での速度キャップ対策は先に試したが根本解決にならなかった（`experiment/ref-vel-cap-sharp-corner`ブランチ参照）。
 
 ### 7.2 ハードウェア差への対応（動的 wp_id_offset）
 
