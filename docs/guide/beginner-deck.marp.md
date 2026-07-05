@@ -73,6 +73,7 @@ make autoware-build
 make dev          # AWSIM + Autoware を開発モードで起動
 make trial        # 6周計測 → 解析 → MLflow 記録まで自動
 make trial-quick  # 2周の素早い計測
+make optuna       # MPC パラメータを Bayesian 最適化（N 回自動試行）
 make eval         # 評価フローを一括実行（提出前の最終確認）
 make down         # コンテナ停止
 ```
