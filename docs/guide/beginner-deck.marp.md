@@ -46,36 +46,42 @@ style: |
 
 ---
 
-## まず覚えるコマンド
-
-<div class="columns">
-
-<div>
+## 初回セットアップ
 
 ```bash
-./docker_build.sh dev       # 開発用イメージをビルド（最初に1回）
-make autoware-build         # Autoware/ROS 2 overlay をビルド
-make dev                    # AWSIM + Autoware を開発モードで起動（1台）
-make trial                  # 6周計測（rosbag + MPC stats 収録）→ 解析に使う
-make eval                   # 評価フローを一括実行（提出前の最終確認）
-make down                   # コンテナ停止
+# 1. サブモジュールを初期化（clone 直後に必須）
+git submodule update --init --recursive
+
+# 2. 解析ツールの Python 環境を構築
+cd racingkart-analysis && make install && cd ..
+
+# 3. 開発用 Docker イメージをビルド（初回のみ）
+./docker_build.sh dev
+
+# 4. Autoware/ROS 2 overlay をビルド（初回・ソース変更後）
+make autoware-build
 ```
 
-</div>
+> `./setup.bash bootstrap` を使うと上記を自動実行できる環境もある。
+> 手動で進める場合はこの順番を守る。
 
-<div>
+---
 
-- 迷ったらこれらから始める
-- セットアップは `./setup.bash bootstrap` で一括実行
+## まず覚えるコマンド
 
-### 実行順序（初回）
-1. `./docker_build.sh dev`
-2. `make autoware-build`
-3. `make dev`
-4. `make down`
+```bash
+make dev          # AWSIM + Autoware を開発モードで起動
+make trial        # 6周計測 → 解析 → MLflow 記録まで自動
+make trial-quick  # 2周の素早い計測
+make eval         # 評価フローを一括実行（提出前の最終確認）
+make down         # コンテナ停止
+```
 
-</div>
-</div>
+| | `make dev` | `make trial-quick` | `make trial` |
+|---|---|---|---|
+| 用途 | 動作確認 | 素早い探索 | ラップタイム計測 |
+| 周回数 | 無制限 | 2周（3周走行） | 6周（7周走行） |
+| MPC stats 記録 | なし | あり | あり |
 
 ---
 
@@ -323,15 +329,17 @@ COMPOSE_FILE=docker-compose.yml:docker-compose.gpu.yml:docker-compose.sound.yml
 
 <div>
 
-### ビルド・起動
+### セットアップ
+- **サブモジュールが空 / 古い** → `git submodule update --init --recursive` を実行する
+- **`uv` が見つからない / 解析ツールが動かない** → `cd racingkart-analysis && make install` を実行する
 - **`install/setup.bash` がない** → `make autoware-build` を先に実行する
-- **起動が不安定/止まらない** → `make down` で停止してから再実行
 
 </div>
 
 <div>
 
-### 設定・マルチ台
+### 起動・設定
+- **起動が不安定 / 止まらない** → `make down` で停止してから再実行
 - **Domain の設定が混乱している** → `ROS_DOMAIN_ID` を `.env` で設定する（デフォルト `1`）
 - **複数台で動かしたい** → `make dev2` / `make dev3` / `make dev4` を使う
 
@@ -342,17 +350,18 @@ COMPOSE_FILE=docker-compose.yml:docker-compose.gpu.yml:docker-compose.sound.yml
 
 ## どの資料から読むべきか
 
-1. `docs/spec/how-to-setup.md`
-2. `docs/spec/introduction.md`
-3. このスライド (`docs/guide/beginner-deck.marp.md`)
+1. このスライド（全体像と基本操作の把握）
+2. `docs/spec/how-to-setup.md`（詳細なセットアップ手順）
+3. `docs/spec/introduction.md`（アーキテクチャの詳細）
 
-- まずセットアップと基本実行の2本を押さえる
+- まずこのスライドで全体像を掴み、次にセットアップ手順を読む
 
 ---
 
 ## まとめ
 
 - 最初は「構造理解」より「実行して結果を見る」を優先
-- 基本コマンドは `build -> dev -> eval -> down`
+- 初回は `git submodule update` と `make install` を忘れずに
+- 基本コマンドは `build → dev → trial → down`
 - ログは `/output/latest/d1`、提出物は `submit/`
 - 慣れたら `vehicle/` と `remote/` に進む
