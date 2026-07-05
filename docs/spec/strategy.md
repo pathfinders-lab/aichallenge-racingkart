@@ -987,7 +987,7 @@ infeasible 連続5回 → v_max を 20% 下げて緊急減速
 |-------|------|--------|------|
 | `analyze_rosbag.py` 相当 | rosbag → JSON メトリクス変換 | ~~最高~~ | **完了**（`racingkart-analysis` Phase 1） |
 | `generate_dashboard.py` 相当 | JSON → HTML ダッシュボード | ~~最高~~ | **完了**（`racingkart-analysis` + MLflow + Cloudflare Pages） |
-| Optuna 連携 | ローカルベイズ最適化の設定 | ~~高~~ | **完了**（`racingkart-analysis/optuna/`） |
+| Optuna 連携 | ローカルベイズ最適化の設定 | ~~高~~ | **完了**（`make optuna STUDY=... N=...` → MLflow → Pages 自動連携） |
 | **waypoint探索のロバスト化（§7.1・トラブル2）** | 近傍ウィンドウ探索+フォールバック | **最高** | 未着手（新規発見） |
 | **N/steer_rate_max のベンチマーク（トラブル1）** | 実時間予算内でのN上限計測 | **最高** | 未着手（§7.3実測データあり） |
 | 起動時ベンチマーク or タイムスタンプ補償 | solve_time 計測 → wp_id_offset 自動設定 | 高 | 未着手（§7.2） |
@@ -999,7 +999,7 @@ infeasible 連続5回 → v_max を 20% 下げて緊急減速
 | mintime 軌跡生成 | `osm-to-raceline` で final コース用を生成 | レーシングライン最適化 | 高 | ツールは構築済み・実行は未着手（§3.2） |
 | vx_mps 活用 | TUMFTM の速度プロファイルを MPC に渡す | 速度プロファイル改善 | 中 | 未着手 |
 | アイテム収集 | `/aichallenge/objects` からニトロを取得 | ブースト活用 | 中 | 未着手 |
-| MPCパラメータ Optuna 最適化 | ラインを固定し30〜50 trial 実行 | MPC パラメータ収束 | 高 | 基盤は完了・実行は未着手 |
+| MPCパラメータ Optuna 最適化 | ラインを固定し30〜50 trial 実行 | MPC パラメータ収束 | 高 | `make optuna` + `make optuna-apply` 準備完了・実行は未着手 |
 | 動的 wp_id_offset | タイムスタンプベース実装 | 環境差の根本解決 | 高 | 未着手 |
 
 **優先順位の考え方（2026-07-05更新）:**
