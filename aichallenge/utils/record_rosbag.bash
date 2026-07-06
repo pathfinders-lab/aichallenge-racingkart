@@ -27,6 +27,8 @@ TOPICS=(
     "/localization/acceleration"
     "/localization/kinematic_state"
     "/mpc/stats"
+    # Published only when use_race_state_estimator is enabled; absent otherwise
+    "/strategy/race_state"
 )
 
 # Run under its own process group so we can stop reliably without killing other recorders.
