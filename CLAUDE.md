@@ -65,6 +65,8 @@ Autoware Universe をベースとした自動運転ソフトウェアを開発�
 ## Git Workflow
 
 - Root Branch: develop
+- 実装作業は git worktree（`.claude/worktrees/`）で隔離して行い、
+  他の作業中の実装・ブランチ・ワーキングツリーに影響を与えない
 - PR 前に必ず `git rebase origin/develop` を実行する
 - PR 作成時は `Language > PR Description` に応じて
   `~/.claude/PULL_REQUEST_TEMPLATE/japanese.md` を
@@ -74,6 +76,12 @@ Autoware Universe をベースとした自動運転ソフトウェアを開発�
 - マージ後はブランチを削除する
 - `main` は `upstream` の変更を反映させる場所とする（fork sync を行う）
 - `upstream` (AutomotiveAIChallenge 公式) への push は絶対に行わない
+
+## Guardrails
+
+- シミュレーション（AWSIM 等）を起動する前に `docker ps` で確認し、
+  別のシミュレーションが動いている間は実行しない
+  （DDS のトピック混線で両方のセッションのデータが壊れるため）
 
 ## Language
 
