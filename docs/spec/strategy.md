@@ -211,13 +211,13 @@ width:           1.45 m     # 公式実車幅（旧2.30の水増しは廃止。�
 
 ```
 s_m, x_m, y_m, psi_rad, kappa_radpm, vx_mps, ax_mps2
-                                      ↑           ↑
-                               （無視）      （無視）
+               ↑          ↑            ↑        ↑
+        （無視・再計算）（無視・再計算） （必須）  （任意）
 ```
 
-**訂正（コード確認済み）:** 実際にMPCが使用する列は `x_m, y_m` の2列のみ。`mpc_controller.py:332` の `wp_x, wp_y, _, _ = load_ref_path(...)` で `psi_rad` / `kappa_radpm` は破棄されており、`ReferencePath` 内部で waypoint 間隔から再計算される。`vx_mps` / `ax_mps2` も無視され、速度プロファイルはMPC側の `v_max` / `ay_max` パラメータで決定される。
+**現状（PR #20以降、コード確認済み）:** 経路形状は `x_m, y_m` の2列から構成され、`psi_rad` / `kappa_radpm` は `load_ref_path()` で破棄されて `ReferencePath` 内部で waypoint 間隔から再計算される。**`vx_mps` は速度制御の唯一の正（必須列。欠落時は起動エラー）**で、起動時に各waypointの `v_ref` へ焼き込まれ、per-stepハード上限 `v_ref×1.05` の根拠にもなる。**`ax_mps2` は任意列**で、存在すれば `effective_ax_limit()` の加速度指令クリップに使われる（§2.2 参照）。
 
-→ 結論: **CSVの形状（x, y の並び）だけが effective であり、psi/kappa/速度列の値は無害**。ただし waypoint 間隔の均一さ・滑らかさは再計算される kappa の質に直結するため重要（`osm-to-raceline` DESIGN.md §1.3 参照）。
+→ 結論: effective なのは **x, y の並び（形状）+ vx_mps（速度）+ ax_mps2（加速度クリップ、任意）**。psi/kappa 列の値は無害。waypoint 間隔の均一さ・滑らかさは再計算される kappa の質に直結するため重要（`osm-to-raceline` DESIGN.md §1.3 参照）。
 
 ### 2.3 参照経路（mintimeライン + 実壁地図）
 
@@ -233,7 +233,7 @@ env/awsim_collision_2026/traj_mintime.csv
 | ウェイポイント数 | 362点 |
 | 平均間隔 | 約0.91 m |
 | 周長 / 最小旋回半径 | 331.2 m / 5.53 m |
-| vx_mps | 7.67〜9.29 m/s（v_max=35km/hで非拘束、全区間シミュレータで到達可能な値のみ計画。計画ラップ39.3 s） |
+| vx_mps | 7.67〜9.29 m/s（v_max=35km/hで非拘束。到達可能域にほぼ整合した計画: コース上の到達可能上限 ~8.9 m/s に対し上限のみ約4%楽観側だが、MPC側の `v_ref×1.05` ハード上限で安全側に処理される。計画ラップ39.3 s） |
 | 占有格子地図 | `env/awsim_collision_2026/occupancy_grid_map.yaml` |
 
 **重要（2026-07-07）:** 地図は**AWSIMバイナリの実物理コライダーから抽出**したもの（`osm-to-raceline` の `build_awsim_collision_map.py`）。従来の `final_ver4` occupancy grid は実壁と一致しておらず（「旧地図上では余裕があってもAWSIM上では車体が壁に入る」）、**技術区間s≈245の確率的衝突の根本原因**だった。検査では実壁マージン最小+0.412 m。旧mincurvライン（final_ver4、最小旋回半径2.25m）は同検査で境界外4点のFAIL。
