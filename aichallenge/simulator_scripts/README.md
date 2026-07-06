@@ -33,6 +33,10 @@ make eval → run_evaluation.bash → evaluation.launch.xml
 | `trial-quick.sh` | 開発探索（`make trial-quick`） | - | 1台 / **3 laps** / 200s / count開始 / wall-recovery on / `/mpc/stats` 記録あり |
 | `dev.sh` | 開発 | 車両数 N（既定 1） | unlimited laps・timeout / count開始 / wall-recovery on / handicap・ranking off |
 | `parallel.sh` | 複数台レース | - | 3台 / 6 laps / 600s / sync開始 / handicap・wall-recovery・ranking on |
+| `trial2.sh` | 開発計測（`make trial2`） | - | 2台 / **7 laps** / 600s / count開始 / handicap・wall-recovery・ranking on / collisions on |
+| `trial2-quick.sh` | 開発探索（`make trial2-quick`） | - | 2台 / **3 laps** / 200s / count開始 / handicap・wall-recovery・ranking on / collisions on |
+| `trial3.sh` | 開発計測（`make trial3`） | - | 3台 / **7 laps** / 600s / count開始 / handicap・wall-recovery・ranking on / collisions on |
+| `trial3-quick.sh` | 開発探索（`make trial3-quick`） | - | 3台 / **3 laps** / 200s / count開始 / handicap・wall-recovery・ranking on / collisions on |
 | `gate.sh` | Safety Gate テスト | テスト番号 1/2/3/all（既定 all） | 1台。all は test1〜3 を順次実行 |
 | `sample-scenario.sh` | シナリオ指定起動 | - | `StreamingAssets/Race/official.yaml` を `--scenario` で読み込む |
 | `multiplay-server.sh` | Multiplay 専用サーバー | - | `-batchmode -nographics`、port 7777 |
@@ -48,6 +52,10 @@ make eval → run_evaluation.bash → evaluation.launch.xml
   解析ツール（`racingkart-analysis`）側で 6 周分のみを使用する。
 - `trial-quick.sh` が 3 laps を指定する理由: 上記と同じ理由で `--laps 2` より 1 多い 3 を指定する。
   2 周計測・速度優先の探索用。
+- `trial2.sh`/`trial3.sh`/`trial2-quick.sh`/`trial3-quick.sh` は `parallel.sh`（3台レースプリセット）をベースに、
+  `--collisions on`・`--start-mode count`（`/admin/awsim/start` の手動送信不要）・`-headless` に変更し、
+  周回数/timeoutは `trial.sh`/`trial-quick.sh` と揃えた（`parallel.sh` 本来の6 laps/600sではない）。
+  racingkart-analysisのanalyze/MLflow連携は呼ばない（複数車両分の本格解析はPhase 2評価フレームワークで別途対応）。
 - センサー（camera/LiDAR）は off が既定。GPU 描画への切り替えは各ファイル末尾のコメント参照。
 - 引数の完全な仕様は AWSIM リポジトリの `docs/AIChallenge/specs/CLI.md` を参照。
 
