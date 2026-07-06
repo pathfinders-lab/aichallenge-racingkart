@@ -62,8 +62,8 @@ cd racingkart-analysis && make install && cd ..
 make autoware-build
 ```
 
-> `./setup.bash bootstrap` を使うと上記を自動実行できる環境もある。
-> 手動で進める場合はこの順番を守る。
+> `./setup.bash bootstrap` は Docker のインストールと `.env` 生成を行うもので、
+> 上記の手順（submodule update / make install）は含まれない。この順番を手動で実行する。
 
 ---
 
