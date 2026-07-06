@@ -29,6 +29,8 @@ TOPICS=(
     "/mpc/stats"
     # Published only when use_race_state_estimator is enabled; absent otherwise
     "/strategy/race_state"
+    # Published only when use_race_strategy_fsm is enabled; absent otherwise
+    "/strategy/mode"
 )
 
 # Run under its own process group so we can stop reliably without killing other recorders.
