@@ -50,6 +50,18 @@ Autoware Universe をベースとした自動運転ソフトウェアを開発�
 - `output/` — 実行ログ出力先（生成物、コミット不要）
 - `submit/` — 提出物置き場
 
+## Issue Workflow
+
+- 今後やりたい作業は GitHub Issue としてチケット化する（1 Issue ≒ 1 PR の粒度。
+  それより大きい作業は Issue を分割する）
+- 検証したこと（実機 trial・ベンチマーク・調査など）の結果・ログ・判断は、
+  対応する Issue のコメントに記録する
+- PR 本文で対応 Issue を必ず参照する（完了させる場合は `Closes #N`、
+  部分対応は `Refs #N`）
+- Issue は変更が入るリポジトリに立てる（サブモジュール側の変更は
+  サブモジュールのリポジトリへ。リポジトリ横断の作業は本リポジトリに立てて
+  相互リンクする）
+
 ## Git Workflow
 
 - Root Branch: develop
@@ -68,6 +80,7 @@ Autoware Universe をベースとした自動運転ソフトウェアを開発�
 - Code Comments: English
 - Commit Messages: English
 - PR Description: Japanese
+- Issues: Japanese
 
 ## Commit Message
 
