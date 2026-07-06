@@ -34,7 +34,7 @@
 
 `parallel.sh` からの変更点（全4ファイル共通）:
 - `--collisions off` → `--collisions on`（V2X回避・接近挙動を実際に衝突判定込みで検証するため）
-- `--start-mode sync` → `--start-mode count --start-count-seconds 5`（`dev.sh`/`trial.sh` と同様、全車接地後に自動カウントダウン開始。`/admin/awsim/start` の手動送信が不要になり「一発で完結する」という目的に合う）
+- `--start-mode sync` → `--start-mode count --start-count-seconds 10`（`trial.sh`/`trial-quick.sh` と同じ10秒。`dev.sh`は5秒だが、複数台分のAutowareスタックが同時に立ち上がる一発勝負のターゲットなので、`trial`系と同じ長めの値を採用する。`/admin/awsim/start` の手動送信が不要になり「一発で完結する」という目的に合う）
 - 末尾に `-headless` を追加（GPUの有無に関わらず確実にヘッドレス実行する）
 - `--laps`/`--timeout` を上表の値に変更（`trial.sh`/`trial-quick.sh` と同じ 7/600・3/200 を踏襲。`parallel.sh` 本来の 6 laps/600s ではなく、単一車両版と同じ「N+1周指定してN周分のログを確実に記録する」ロジックを流用する）
 
@@ -74,9 +74,10 @@ make trial2 (または trial2-quick / trial3 / trial3-quick)
 - それ以外の終了コード（クラッシュ）はエラーメッセージを出し、`make down` を手動で呼ぶよう促した上で非ゼロ終了する。
 - `make down` は既に `for p in 1 2 3 4` でループする実装になっており、2台・3台どちらのケースも追加変更なしでカバーできる。
 
-## 未解決の懸念（実装時に実機で確認する）
+## 未解決の懸念（実装時に実機で確認する）→ 解決済み
 
 - `ranking on`（複数車両レース）での「Finish」発火条件が単一車両と同じか未確認。先頭車がN周した時点で全車のrosbagが停止するのか、各車個別に停止するのかによっては、後方車のログが短くなる可能性がある。`trial.sh`/`trial-quick.sh` の「N+1周指定」がそのまま複数車両でも有効かは、実装後に一度ヘッドレス実行して各車のrosbagログを確認し、必要なら周回数を調整する。
+- **結果（2026-07-06、`make trial2-quick`実機実行にて確認）**: 懸念は発生しなかった。d1・d2ともに`Lap 2 completed`がログに残り、後方車（d1）のログが短くなることはなかった（d2はLap 3まで完走、d1はLap 2で終了——いずれも正常な挙動）。周回数の調整（コンティンジェンシー）は不要だった。
 
 ## 検証方法
 
