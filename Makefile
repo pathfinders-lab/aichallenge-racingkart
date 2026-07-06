@@ -2,7 +2,8 @@
 SHELL := /bin/bash
 
 .PHONY: autoware-build autoware-vehicle autoware-simulator autoware-request-initialpose autoware-request-control  awsim-request-start awsim-request-reset autoware-driver-zenoh autoware-driver-zenoh-rosbag trial trial-quick \
-	simulator dev dev2 dev3 dev4 driver zenoh download rviz2 down down_all ps autoware-attach autoware-bash eval optuna optuna-apply
+	simulator dev dev2 dev3 dev4 driver zenoh download rviz2 down down_all ps autoware-attach autoware-bash eval optuna optuna-apply \
+	trial2 trial2-quick trial3 trial3-quick
 
 # Used by docker-compose.yml for build/eval artifact ownership.
 HOST_UID ?= $(shell id -u)
@@ -126,6 +127,67 @@ dev2 dev3 dev4: simulator
 	echo "Start $$N-vehicle dev (autoware on ROS_DOMAIN_ID 1..$$N via docker compose -p)"; \
 	for p in $$(seq 1 $$N); do LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p docker compose -p $$p up -d autoware; done; \
 	echo "To Stop: make down"
+
+# N-vehicle version of trial (7 laps; records /mpc/stats per vehicle; no analyze/MLflow —
+# see docs/superpowers/specs/2026-07-06-multi-vehicle-trial-design.md for why).
+# Blocks until AWSIM finishes, then runs make down automatically.
+# Exit 0 = all laps done; exit 124 = AWSIM --timeout fired (normal); other = crash (stop).
+trial2: SIM_MODE := trial2
+trial2: simulator
+	@echo "[trial2] AWSIM started (2 vehicles, 7 laps, ~10 min). Waiting for completion..."
+	@for p in 1 2; do LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p docker compose -p $$p up -d autoware; done
+	@docker compose wait simulator > /dev/null 2>&1; sim_exit=$$?; \
+	if [ "$$sim_exit" -ne 0 ] && [ "$$sim_exit" -ne 124 ]; then \
+	    echo "[trial2] ERROR: AWSIM crashed (exit $$sim_exit). Run 'make down' manually."; \
+	    exit "$$sim_exit"; \
+	fi
+	@$(MAKE) --no-print-directory -s down 2>/dev/null
+	@echo "[trial2] Done. rosbags saved at: output/$(TIMESTAMP)/d1, output/$(TIMESTAMP)/d2"
+
+# N-vehicle version of trial-quick (3 laps; quick exploration).
+# Blocks until AWSIM finishes, then runs make down automatically.
+# Exit 0 = all laps done; exit 124 = AWSIM --timeout fired (normal); other = crash (stop).
+trial2-quick: SIM_MODE := trial2-quick
+trial2-quick: simulator
+	@echo "[trial2-quick] AWSIM started (2 vehicles, 3 laps, ~5 min). Waiting for completion..."
+	@for p in 1 2; do LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p docker compose -p $$p up -d autoware; done
+	@docker compose wait simulator > /dev/null 2>&1; sim_exit=$$?; \
+	if [ "$$sim_exit" -ne 0 ] && [ "$$sim_exit" -ne 124 ]; then \
+	    echo "[trial2-quick] ERROR: AWSIM crashed (exit $$sim_exit). Run 'make down' manually."; \
+	    exit "$$sim_exit"; \
+	fi
+	@$(MAKE) --no-print-directory -s down 2>/dev/null
+	@echo "[trial2-quick] Done. rosbags saved at: output/$(TIMESTAMP)/d1, output/$(TIMESTAMP)/d2"
+
+# N-vehicle version of trial (7 laps; records /mpc/stats per vehicle; no analyze/MLflow).
+# Blocks until AWSIM finishes, then runs make down automatically.
+# Exit 0 = all laps done; exit 124 = AWSIM --timeout fired (normal); other = crash (stop).
+trial3: SIM_MODE := trial3
+trial3: simulator
+	@echo "[trial3] AWSIM started (3 vehicles, 7 laps, ~10 min). Waiting for completion..."
+	@for p in 1 2 3; do LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p docker compose -p $$p up -d autoware; done
+	@docker compose wait simulator > /dev/null 2>&1; sim_exit=$$?; \
+	if [ "$$sim_exit" -ne 0 ] && [ "$$sim_exit" -ne 124 ]; then \
+	    echo "[trial3] ERROR: AWSIM crashed (exit $$sim_exit). Run 'make down' manually."; \
+	    exit "$$sim_exit"; \
+	fi
+	@$(MAKE) --no-print-directory -s down 2>/dev/null
+	@echo "[trial3] Done. rosbags saved at: output/$(TIMESTAMP)/d1, output/$(TIMESTAMP)/d2, output/$(TIMESTAMP)/d3"
+
+# N-vehicle version of trial-quick (3 laps; quick exploration).
+# Blocks until AWSIM finishes, then runs make down automatically.
+# Exit 0 = all laps done; exit 124 = AWSIM --timeout fired (normal); other = crash (stop).
+trial3-quick: SIM_MODE := trial3-quick
+trial3-quick: simulator
+	@echo "[trial3-quick] AWSIM started (3 vehicles, 3 laps, ~5 min). Waiting for completion..."
+	@for p in 1 2 3; do LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p docker compose -p $$p up -d autoware; done
+	@docker compose wait simulator > /dev/null 2>&1; sim_exit=$$?; \
+	if [ "$$sim_exit" -ne 0 ] && [ "$$sim_exit" -ne 124 ]; then \
+	    echo "[trial3-quick] ERROR: AWSIM crashed (exit $$sim_exit). Run 'make down' manually."; \
+	    exit "$$sim_exit"; \
+	fi
+	@$(MAKE) --no-print-directory -s down 2>/dev/null
+	@echo "[trial3-quick] Done. rosbags saved at: output/$(TIMESTAMP)/d1, output/$(TIMESTAMP)/d2, output/$(TIMESTAMP)/d3"
 
 gate1: SIM_MODE := gate1
 gate2: SIM_MODE := gate2
