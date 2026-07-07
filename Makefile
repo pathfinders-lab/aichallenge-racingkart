@@ -19,6 +19,48 @@ endif
 TIMESTAMP := $(shell date +%Y%m%d-%H%M%S)
 LOG_DIR := /output/$(TIMESTAMP)
 
+# AWSIM never self-exits after FinishALL, and its --timeout does not fire once
+# the race has finished (Issue #60). Without this watcher every trial-* run
+# would idle until the shell-level hard cap in simulator_scripts/*.sh kills
+# AWSIM (~3.5 min wasted per quick run, ~7 min per full trial). Poll awsim.log
+# for FinishALL and stop the containers as soon as all laps are done.
+# Simulator container exit is the fallback (crash, or the hard cap on a run
+# that never finishes): exit 0/124 proceeds, other codes abort — after cleanup,
+# so no containers are left to cross-talk with the next run. Ctrl-C during the
+# wait also stops the containers.
+# $(1) = label used in log messages (e.g. trial-quick)
+define WAIT_AWSIM_THEN_DOWN
+	@log="output/$(TIMESTAMP)/awsim.log"; label="$(1)"; \
+	cleanup() { \
+	    if ! $(MAKE) --no-print-directory -s down > /dev/null 2>&1; then \
+	        echo "[$$label] WARNING: 'make down' failed. Run it manually and check 'docker ps'."; \
+	    fi; \
+	}; \
+	trap 'echo ""; echo "[$$label] Interrupted. Stopping containers..."; cleanup; exit 130' INT TERM; \
+	sim_exit=""; \
+	while :; do \
+	    if grep -aqF "state → FinishALL" "$$log" 2>/dev/null; then \
+	        echo "[$$label] All laps completed. Stopping containers..."; \
+	        break; \
+	    fi; \
+	    cid=$$(docker compose ps -aq simulator 2>/dev/null | head -1); \
+	    if [ -z "$$cid" ]; then \
+	        echo "[$$label] WARNING: simulator container disappeared. Stopping..."; \
+	        break; \
+	    fi; \
+	    st=$$(docker inspect -f '{{.State.Status}} {{.State.ExitCode}}' "$$cid" 2>/dev/null); \
+	    case "$$st" in exited*) sim_exit="$${st#exited }"; break ;; esac; \
+	    sleep 2; \
+	done; \
+	trap - INT TERM; \
+	if [ -n "$$sim_exit" ] && [ "$$sim_exit" -ne 0 ] && [ "$$sim_exit" -ne 124 ]; then \
+	    echo "[$$label] ERROR: AWSIM exited unexpectedly (exit $$sim_exit). Logs: output/$(TIMESTAMP)"; \
+	    cleanup; \
+	    exit "$$sim_exit"; \
+	fi; \
+	cleanup
+endef
+
 # make simulator-<mode>: <mode> は simulator_scripts/*.sh のファイル名
 SIM_MODES := $(notdir $(basename $(wildcard aichallenge/simulator_scripts/*.sh)))
 # dev<N>（車両数）/ gate<N>（テスト番号）は run_simulator.bash が展開するエイリアス
@@ -74,17 +116,11 @@ dev: simulator autoware-simulator
 	@echo "To stop: make down  (docker compose down --remove-orphans)"
 
 # 6 measured laps on dev image (runs 7 laps; records /mpc/stats; no d1-result-details.json)
-# Blocks until AWSIM finishes, then runs make down + make analyze automatically.
-# Exit 0 = all laps done; exit 124 = AWSIM --timeout fired (normal); other = crash (stop).
+# Waits for FinishALL in awsim.log, then runs make down + make analyze automatically.
 trial: SIM_MODE := trial
 trial: simulator autoware-simulator
-	@echo "[trial] AWSIM started (7 laps, ~10 min). Waiting for completion..."
-	@docker compose wait simulator > /dev/null 2>&1; sim_exit=$$?; \
-	if [ "$$sim_exit" -ne 0 ] && [ "$$sim_exit" -ne 124 ]; then \
-	    echo "[trial] ERROR: AWSIM crashed (exit $$sim_exit). Run 'make down' manually."; \
-	    exit "$$sim_exit"; \
-	fi
-	@$(MAKE) --no-print-directory -s down 2>/dev/null
+	@echo "[trial] AWSIM started (7 laps, ~7 min). Waiting for all laps (FinishALL)..."
+	$(call WAIT_AWSIM_THEN_DOWN,trial)
 	@OUTPUT="output/$(TIMESTAMP)/d1"; \
 	if (cd racingkart-analysis && make --no-print-directory analyze OUTPUT="../$${OUTPUT}" COMMAND=trial LAPS=6); then \
 	    echo "[trial] Done. → https://racingkart-results.pages.dev/runs/"; \
@@ -97,17 +133,11 @@ trial: simulator autoware-simulator
 	fi
 
 # 2 measured laps on dev image (runs 3 laps; records /mpc/stats; quick exploration)
-# Blocks until AWSIM finishes, then runs make down + make analyze automatically.
-# Exit 0 = all laps done; exit 124 = AWSIM --timeout fired (normal); other = crash (stop).
+# Waits for FinishALL in awsim.log, then runs make down + make analyze automatically.
 trial-quick: SIM_MODE := trial-quick
 trial-quick: simulator autoware-simulator
-	@echo "[trial-quick] AWSIM started (3 laps, ~5 min). Waiting for completion..."
-	@docker compose wait simulator > /dev/null 2>&1; sim_exit=$$?; \
-	if [ "$$sim_exit" -ne 0 ] && [ "$$sim_exit" -ne 124 ]; then \
-	    echo "[trial-quick] ERROR: AWSIM crashed (exit $$sim_exit). Run 'make down' manually."; \
-	    exit "$$sim_exit"; \
-	fi
-	@$(MAKE) --no-print-directory -s down 2>/dev/null
+	@echo "[trial-quick] AWSIM started (3 laps, ~3.5 min). Waiting for all laps (FinishALL)..."
+	$(call WAIT_AWSIM_THEN_DOWN,trial-quick)
 	@OUTPUT="output/$(TIMESTAMP)/d1"; \
 	if (cd racingkart-analysis && make --no-print-directory analyze OUTPUT="../$${OUTPUT}" COMMAND=trial-quick LAPS=2); then \
 	    echo "[trial-quick] Done. → https://racingkart-results.pages.dev/runs/"; \
@@ -130,63 +160,39 @@ dev2 dev3 dev4: simulator
 
 # N-vehicle version of trial (7 laps; records /mpc/stats per vehicle; no analyze/MLflow —
 # see docs/superpowers/specs/2026-07-06-multi-vehicle-trial-design.md for why).
-# Blocks until AWSIM finishes, then runs make down automatically.
-# Exit 0 = all laps done; exit 124 = AWSIM --timeout fired (normal); other = crash (stop).
+# Waits for FinishALL in awsim.log, then runs make down automatically.
 trial2: SIM_MODE := trial2
 trial2: simulator
-	@echo "[trial2] AWSIM started (2 vehicles, 7 laps, ~10 min). Waiting for completion..."
+	@echo "[trial2] AWSIM started (2 vehicles, 7 laps, ~7 min). Waiting for all laps (FinishALL)..."
 	@for p in 1 2; do LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p docker compose -p $$p up -d autoware; done
-	@docker compose wait simulator > /dev/null 2>&1; sim_exit=$$?; \
-	if [ "$$sim_exit" -ne 0 ] && [ "$$sim_exit" -ne 124 ]; then \
-	    echo "[trial2] ERROR: AWSIM crashed (exit $$sim_exit). Run 'make down' manually."; \
-	    exit "$$sim_exit"; \
-	fi
-	@$(MAKE) --no-print-directory -s down 2>/dev/null
+	$(call WAIT_AWSIM_THEN_DOWN,trial2)
 	@echo "[trial2] Done. rosbags saved at: output/$(TIMESTAMP)/d1, output/$(TIMESTAMP)/d2"
 
 # N-vehicle version of trial-quick (3 laps; quick exploration).
-# Blocks until AWSIM finishes, then runs make down automatically.
-# Exit 0 = all laps done; exit 124 = AWSIM --timeout fired (normal); other = crash (stop).
+# Waits for FinishALL in awsim.log, then runs make down automatically.
 trial2-quick: SIM_MODE := trial2-quick
 trial2-quick: simulator
-	@echo "[trial2-quick] AWSIM started (2 vehicles, 3 laps, ~5 min). Waiting for completion..."
+	@echo "[trial2-quick] AWSIM started (2 vehicles, 3 laps, ~3.5 min). Waiting for all laps (FinishALL)..."
 	@for p in 1 2; do LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p docker compose -p $$p up -d autoware; done
-	@docker compose wait simulator > /dev/null 2>&1; sim_exit=$$?; \
-	if [ "$$sim_exit" -ne 0 ] && [ "$$sim_exit" -ne 124 ]; then \
-	    echo "[trial2-quick] ERROR: AWSIM crashed (exit $$sim_exit). Run 'make down' manually."; \
-	    exit "$$sim_exit"; \
-	fi
-	@$(MAKE) --no-print-directory -s down 2>/dev/null
+	$(call WAIT_AWSIM_THEN_DOWN,trial2-quick)
 	@echo "[trial2-quick] Done. rosbags saved at: output/$(TIMESTAMP)/d1, output/$(TIMESTAMP)/d2"
 
 # N-vehicle version of trial (7 laps; records /mpc/stats per vehicle; no analyze/MLflow).
-# Blocks until AWSIM finishes, then runs make down automatically.
-# Exit 0 = all laps done; exit 124 = AWSIM --timeout fired (normal); other = crash (stop).
+# Waits for FinishALL in awsim.log, then runs make down automatically.
 trial3: SIM_MODE := trial3
 trial3: simulator
-	@echo "[trial3] AWSIM started (3 vehicles, 7 laps, ~10 min). Waiting for completion..."
+	@echo "[trial3] AWSIM started (3 vehicles, 7 laps, ~7 min). Waiting for all laps (FinishALL)..."
 	@for p in 1 2 3; do LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p docker compose -p $$p up -d autoware; done
-	@docker compose wait simulator > /dev/null 2>&1; sim_exit=$$?; \
-	if [ "$$sim_exit" -ne 0 ] && [ "$$sim_exit" -ne 124 ]; then \
-	    echo "[trial3] ERROR: AWSIM crashed (exit $$sim_exit). Run 'make down' manually."; \
-	    exit "$$sim_exit"; \
-	fi
-	@$(MAKE) --no-print-directory -s down 2>/dev/null
+	$(call WAIT_AWSIM_THEN_DOWN,trial3)
 	@echo "[trial3] Done. rosbags saved at: output/$(TIMESTAMP)/d1, output/$(TIMESTAMP)/d2, output/$(TIMESTAMP)/d3"
 
 # N-vehicle version of trial-quick (3 laps; quick exploration).
-# Blocks until AWSIM finishes, then runs make down automatically.
-# Exit 0 = all laps done; exit 124 = AWSIM --timeout fired (normal); other = crash (stop).
+# Waits for FinishALL in awsim.log, then runs make down automatically.
 trial3-quick: SIM_MODE := trial3-quick
 trial3-quick: simulator
-	@echo "[trial3-quick] AWSIM started (3 vehicles, 3 laps, ~5 min). Waiting for completion..."
+	@echo "[trial3-quick] AWSIM started (3 vehicles, 3 laps, ~3.5 min). Waiting for all laps (FinishALL)..."
 	@for p in 1 2 3; do LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p docker compose -p $$p up -d autoware; done
-	@docker compose wait simulator > /dev/null 2>&1; sim_exit=$$?; \
-	if [ "$$sim_exit" -ne 0 ] && [ "$$sim_exit" -ne 124 ]; then \
-	    echo "[trial3-quick] ERROR: AWSIM crashed (exit $$sim_exit). Run 'make down' manually."; \
-	    exit "$$sim_exit"; \
-	fi
-	@$(MAKE) --no-print-directory -s down 2>/dev/null
+	$(call WAIT_AWSIM_THEN_DOWN,trial3-quick)
 	@echo "[trial3-quick] Done. rosbags saved at: output/$(TIMESTAMP)/d1, output/$(TIMESTAMP)/d2, output/$(TIMESTAMP)/d3"
 
 gate1: SIM_MODE := gate1
