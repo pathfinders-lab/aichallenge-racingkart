@@ -38,6 +38,9 @@ Autoware Universe をベースとした自動運転ソフトウェアを開発�
 - 実装計画書は `docs/plan/YYYY-MM-DD-<feature>.md` に保存（`.gitignore` 済み、コミット不要）
 - PR マージ後または実装完了後に計画書ファイルを削除する（またはユーザーに削除を促す）
 - 仕様書 (`docs/spec/`) は「現状」を記述する。1 トピック 1 ファイル。日付をファイル名に含めない
+- 日付付きの詳細設計書（`docs/superpowers/` 以下の specs/plans）はローカル作業ファイルであり
+  コミットしない（`.gitignore` 済み）。**設計書だけの PR は作らない**。
+  設計の共有・記録は対応 Issue のコメントか `docs/spec/` の現状ドキュメント更新で行う
 - `design_docs/` など `docs/` 以外への設計書作成は行わない
 
 ## Key Files
