@@ -47,6 +47,8 @@ Autoware Universe をベースとした自動運転ソフトウェアを開発�
 
 - `aichallenge/` — メイン開発ディレクトリ（ROS2パッケージ群）
 - `aichallenge/README.md` — エントリポイントまとめ
+- `docs/guide/beginner-deck.marp.md` — 基本操作・検証フローのガイド
+  （build → dev → trial → down）。検証・実験の手順を組む前に必ず参照する
 - `docker-compose.yml` — サービス定義（触る際は注意）
 - `Dockerfile` — Autoware イメージ定義
 - `vehicle/` — 実車環境向け設定
