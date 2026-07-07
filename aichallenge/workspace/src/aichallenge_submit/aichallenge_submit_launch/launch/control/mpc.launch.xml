@@ -9,6 +9,9 @@
   <!-- Requires use_obstacle_avoidance (and is incompatible with
        use_path_constraints_topic); the node disables itself otherwise. -->
   <arg name="use_standstill_recovery" default="false"/>
+  <!-- Official boost item scheduler (issue #47). Needs the 2026-07-01+
+       AWSIM binary; older ones silently ignore /awsim/cmd. -->
+  <arg name="use_official_boost" default="false"/>
 
   <node pkg="multi_purpose_mpc_ros_custom" exec="run_mpc_controller.bash"
         name="mpc_controller" output="screen"
@@ -20,6 +23,7 @@
     <param name="use_race_state_estimator" value="$(var use_race_state_estimator)"/>
     <param name="use_race_strategy_fsm" value="$(var use_race_strategy_fsm)"/>
     <param name="use_standstill_recovery" value="$(var use_standstill_recovery)"/>
+    <param name="use_official_boost" value="$(var use_official_boost)"/>
     <param name="use_stats" value="true"/>
   </node>
 </launch>
