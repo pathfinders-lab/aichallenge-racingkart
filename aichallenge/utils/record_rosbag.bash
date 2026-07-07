@@ -31,6 +31,8 @@ TOPICS=(
     "/strategy/race_state"
     # Published only when use_race_strategy_fsm is enabled; absent otherwise
     "/strategy/mode"
+    # Published only when use_standstill_recovery is enabled; absent otherwise
+    "/strategy/recovery"
 )
 
 # Run under its own process group so we can stop reliably without killing other recorders.
