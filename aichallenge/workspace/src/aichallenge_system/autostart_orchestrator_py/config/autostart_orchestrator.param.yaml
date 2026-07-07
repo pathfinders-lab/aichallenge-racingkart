@@ -26,6 +26,10 @@
       - /strategy/race_state
       - /strategy/mode
       - /strategy/recovery
+      # Official boost telemetry (issue #47): remaining count / active flag
+      # and our activation edges.
+      - /awsim/status
+      - /awsim/cmd
     rosbag_output: rosbag2_autoware
     rosbag_storage_id: mcap
     # Leave both empty to keep rosbag output as plain .mcap (no outer compression).
