@@ -1,7 +1,7 @@
 # Standstill デッドロック対策（予防＋保険）設計
 
 対象リポジトリ: `multi_purpose_mpc_ros_custom`（本書は経緯・設計の記録として本体リポジトリに置く）
-チケット: 予防=mpc #33、保険=mpc #31（機序の実測は本体 #43 / #50 のコメント参照）
+チケット: 予防=pathfinders-lab/multi_purpose_mpc_ros_custom#33、保険=pathfinders-lab/multi_purpose_mpc_ros_custom#31（機序の実測は本体 #43 / #50 のコメント参照）
 関連 bag: `output/20260707-111842`（本体リポジトリのメインチェックアウトに保全済み）
 
 ## 1. 背景と問題
@@ -23,8 +23,8 @@ trial2 の速度差シナリオで確定再現したデッドロックの機序�
 
 ## 2. スコープ
 
-- **Fix-1（予防、mpc #33）**: infeasible 再生時の減速オーバーレイ＋ solved 判定バグ修正
-- **Fix-2（保険、mpc #31）**: standstill 回復スーパーバイザ（徐行脱出）
+- **Fix-1（予防、multi_purpose_mpc_ros_custom#33）**: infeasible 再生時の減速オーバーレイ＋ solved 判定バグ修正
+- **Fix-2（保険、multi_purpose_mpc_ros_custom#31）**: standstill 回復スーパーバイザ（徐行脱出）
 - 実装は独立した 2 PR（Fix-1 → Fix-2 の順。Fix-2 のテストは修正済み solved 判定を前提にする）
 
 ### スコープ外（理由つき）
@@ -34,7 +34,7 @@ trial2 の速度差シナリオで確定再現したデッドロックの機序�
 - **overtake_min_clearance_m の見直し**: 本体 #50 で実効コリドー幅の分布から別途
 - **戦略層 STUCK 状態（後退・譲り）**: Phase 3（本体 #50 完了条件の後続判断）
 
-## 3. Fix-1: infeasible 再生の減速オーバーレイ（mpc #33）
+## 3. Fix-1: infeasible 再生の減速オーバーレイ（multi_purpose_mpc_ros_custom#33）
 
 ### 3.1 変更点（`core/MPC.py` のみ）
 
@@ -64,7 +64,7 @@ trial2 の速度差シナリオで確定再現したデッドロックの機序�
 `mpc:` セクションに `infeasible_brake_decel: 2.0  # m/s^2` を追加し、
 controller が MPC コンストラクタへ渡す。
 
-## 4. Fix-2: standstill 回復スーパーバイザ（mpc #31）
+## 4. Fix-2: standstill 回復スーパーバイザ（multi_purpose_mpc_ros_custom#31）
 
 ### 4.1 コンポーネント
 
@@ -137,6 +137,6 @@ class StandstillRecovery:
 
 ## 6. 実装順
 
-1. Fix-1（mpc #33、PR 1 本目）: core/MPC.py＋config＋テスト
-2. Fix-2（mpc #31、PR 2 本目）: standstill_recovery.py＋msg＋controller 結線＋config＋テスト
+1. Fix-1（multi_purpose_mpc_ros_custom#33、PR 1 本目）: core/MPC.py＋config＋テスト
+2. Fix-2（multi_purpose_mpc_ros_custom#31、PR 2 本目）: standstill_recovery.py＋msg＋controller 結線＋config＋テスト
 3. 親リポジトリ: submodule bump＋launch フラグ配線＋live 検証（#50 で記録）
