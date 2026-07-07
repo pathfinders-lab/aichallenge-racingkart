@@ -25,6 +25,7 @@ doc/tmp/*
 /CLAUDE.md
 
 docs/plan/
+docs/superpowers/
 
 # Superpowers session state (local only)
 .superpowers/
