@@ -219,12 +219,12 @@ width:           1.45 m     # 公式実車幅（旧2.30の水増しは廃止。�
 ```
 s_m, x_m, y_m, psi_rad, kappa_radpm, vx_mps, ax_mps2
                ↑          ↑            ↑        ↑
-        （無視・再計算）（無視・再計算） （必須）  （任意）
+        （無視・再計算） （任意・焼き込み）（必須）  （任意）
 ```
 
-**現状（PR #20以降、コード確認済み）:** 経路形状は `x_m, y_m` の2列から構成され、`psi_rad` / `kappa_radpm` は `load_ref_path()` で破棄されて `ReferencePath` 内部で waypoint 間隔から再計算される。**`vx_mps` は速度制御の唯一の正（必須列。欠落時は起動エラー）**で、起動時に各waypointの `v_ref` へ焼き込まれ、per-stepハード上限 `v_ref×1.05` の根拠にもなる。**`ax_mps2` は任意列**で、存在すれば `effective_ax_limit()` の加速度指令クリップに使われる（§2.2 参照）。
+**現状（PR #34以降、コード確認済み）:** 経路形状は `x_m, y_m` の2列から構成され、`psi_rad` は `ReferencePath` 内部で waypoint 間隔から再計算される。**`kappa_radpm` は任意列**で、存在すれば起動時に waypoint の `kappa` へ焼き込まれる（`use_csv_kappa`、default true）。xy 再構成の曲率はピークを約56%過大評価しており（0.283 vs 計画 0.181・実走 p95 0.20）、焼き込みでこれを解消する。**`vx_mps` は速度制御の唯一の正（必須列。欠落時は起動エラー）**で、起動時に各waypointの `v_ref` へ焼き込まれ、per-stepハード上限 `v_ref×1.05` の根拠にもなる。**`ax_mps2` は任意列**で、存在すれば `effective_ax_limit()` の加速度指令クリップに使われる（§2.2 参照）。
 
-→ 結論: effective なのは **x, y の並び（形状）+ vx_mps（速度）+ ax_mps2（加速度クリップ、任意）**。psi/kappa 列の値は無害。waypoint 間隔の均一さ・滑らかさは再計算される kappa の質に直結するため重要（`osm-to-raceline` DESIGN.md §1.3 参照）。
+→ 結論: effective なのは **x, y の並び（形状）+ kappa_radpm（コーナー速度上限、任意）+ vx_mps（速度）+ ax_mps2（加速度クリップ、任意）**。psi 列の値は無害。waypoint 間隔の均一さ・滑らかさは kappa 列が無い場合の再計算品質に直結するため引き続き重要（`osm-to-raceline` DESIGN.md §1.3 参照）。
 
 ### 2.3 参照経路（mintimeライン + 実壁地図）
 
@@ -326,7 +326,8 @@ MPC → `boost_commander` relay 経由で acc=500 m/s² を 1,700 Hz publish す
 | 中速（セッション開始時点） | 64 s | — |
 | 究極プリセット + mincurvライン（旧地図） | 51.95 s | 確率的に発生（s≈245） |
 | mintime trajectory化 + 実壁地図（PR #20） | ≈46.0 s | ゼロ（6周trial×2回連続クリーン） |
-| **実測縦モデル trajectory（PR #24、現在）** | **≈44.5 s**（best 44.295 s / avg2to6 44.427 s、best 44.330 s / avg2to6 44.494 s） | **ゼロ（6周trial×2回連続クリーン）** |
+| 実測縦モデル trajectory（PR #24） | ≈44.5 s（best 44.295 s / avg2to6 44.427 s、best 44.330 s / avg2to6 44.494 s） | ゼロ（6周trial×2回連続クリーン） |
+| **コーナー速度統治の修正（PR #34、現在）** | **≈43.0 s**（best 42.825 s / avg2to6 42.969 s、best 42.835 s / avg2to6 42.902 s） | **ゼロ（6周trial×2回連続クリーン）** |
 
 改善の主因は §3.6 の縦方向制御刷新（vx_mps単一ソース化＋ハード制約・摩擦円クリップ・公式値整合）と実壁地図に加え、実測抵抗を織り込んだ縦モデルでの trajectory 再最適化（後述）。solve time も平均約3.6 msに改善。
 
@@ -335,7 +336,7 @@ MPC → `boost_commander` relay 経由で acc=500 m/s² を 1,700 Hz publish す
 1. **縦モデルの精度: 解消済み**。抵抗カーブを実走データから同定した（r(v) = 0.1671 + 0.0722·v [m/s²]、力換算 F_res(v)=26.73+11.545·v N、mass 160kg、有効域 v∈[0.3, 8.7] m/s、同定ツールは racingkart-analysis PR #33）。旧記述の「加速度指令+1.0 m/s²での平衡速度≈31.7 km/h」は誤りだったと判明: 実測 vx 最大 8.82 m/s は平衡ではなくストレート長による制約（区間終端でも dv/dt≈+0.2 m/s²で加速中）。コース上の到達可能上限は約8.9 m/s（32 km/h）で、trial実測のvx最大8.87〜8.88 m/sと一致する。この実測抵抗を osm-to-raceline の縦モデル（駆動160N + 実測抵抗）に反映して trajectory を再共最適化した（計画 vx 7.67〜9.29 m/s、計画ラップ39.3 s）。MPC側も v_max 30→35 km/h（非拘束化。速度制御の正はvx_mpsプロファイル一本）、TRAJ_AY_BUDGET 9.0→12.0（ay_max=12と整合）へ更新済み
 2. **公式ブースト未実装**: 5 回×10 秒×+0.5 m/s²（§2.5）。加速の唯一の正規ブーストルートであり未着手（issue #47）。なお exploit 型 boost は −4.0 s/lap を実測したが OVER ペナルティで封じられた（issue #46）
 3. **a_max の合法上限は 1.37 m/s²**（AWSIM 入力 clamp、§1.4）: 現行 1.0 からの引き上げ余地と、a_min=-2.5 の過大評価疑い（対称 clamp なら実効 -1.37）の実測検証が issue #53
-4. 次の伸び代候補（未検証・断定はしない）: コーナー区間の最適性（現在は steer-rate 律速の可能性）や、高速直線でのweaving（蛇行）低減の余地
+4. **コーナー速度の統治: 主要因は解消済み**（issue #29 / PR #34）。実測44.4s vs 計画39.3sの5.1sギャップのs別分解で、`vmax_dyn = √(ay_max/κ)` の κ が「前回QP解のステアリング列 tan(δ)/L のホライズンmax」であり、舵の過渡スパイク（p99≈0.26）がコーナー上限を≈6.8 m/sに張り付けていたことが判明。CSV `kappa_radpm` の焼き込み（`use_csv_kappa`）＋速度上限の曲率源を path kappa へ切替（`use_path_kappa_vmax`）で ≈43.0 s（−1.5 s/周、壁マージン・e_y は同水準）。残余 ~0.5〜1.5 s の候補（未検証）: 一部コーナー（s≈160–220、+0.25 m/s 止まり）の steer-rate 律速疑い、高速直線の weaving（蛇行）低減
 
 ---
 
