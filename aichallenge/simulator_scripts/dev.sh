@@ -11,7 +11,7 @@ exec $AWSIM_DIRECTORY/AWSIM.x86_64 \
     --start-count-seconds 5 \
     --vehicles "${vehicles}" \
     --npcs 0 \
-    --boosts 2 \
+    --boosts 5 \
     --laps unlimited \
     --timeout 10000000.0 \
     --steer-source ackermann \
