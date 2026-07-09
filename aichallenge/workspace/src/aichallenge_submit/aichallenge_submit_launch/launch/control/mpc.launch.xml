@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
   <arg name="use_sim_time" default="true"/>
-  <arg name="use_obstacle_avoidance" default="false"/>
-  <arg name="use_race_state_estimator" default="false"/>
+  <arg name="use_obstacle_avoidance" default="true"/>
+  <arg name="use_race_state_estimator" default="true"/>
   <!-- Requires use_obstacle_avoidance and use_race_state_estimator (and the
        bearing classifier, on by default); the node disables itself otherwise. -->
-  <arg name="use_race_strategy_fsm" default="false"/>
+  <arg name="use_race_strategy_fsm" default="true"/>
   <!-- Requires use_obstacle_avoidance (and is incompatible with
        use_path_constraints_topic); the node disables itself otherwise. -->
-  <arg name="use_standstill_recovery" default="false"/>
+  <arg name="use_standstill_recovery" default="true"/>
+  <!-- Pure path-frame corridor (mpc issue #59). Requires use_obstacle_avoidance
+       and use_race_state_estimator; the node disables itself otherwise. -->
+  <arg name="use_lateral_corridor" default="true"/>
   <!-- Official boost item scheduler (issue #47). Needs the 2026-07-01+
        AWSIM binary; older ones silently ignore /awsim/cmd. -->
   <arg name="use_official_boost" default="false"/>
@@ -23,6 +26,7 @@
     <param name="use_race_state_estimator" value="$(var use_race_state_estimator)"/>
     <param name="use_race_strategy_fsm" value="$(var use_race_strategy_fsm)"/>
     <param name="use_standstill_recovery" value="$(var use_standstill_recovery)"/>
+    <param name="use_lateral_corridor" value="$(var use_lateral_corridor)"/>
     <param name="use_official_boost" value="$(var use_official_boost)"/>
     <param name="use_stats" value="true"/>
   </node>
