@@ -18,5 +18,15 @@ log_dir="${LOG_DIR:-/output}"
 mkdir -p "${log_dir}"
 exec >"${log_dir}/awsim.log" 2>&1
 
+# Fingerprint the AWSIM build that is about to run so the analysis side can
+# tag MLflow runs with the exact simulator version (the build carries no
+# version string). Best-effort: failure must never block the launch.
+gg_file="/aichallenge/simulator/AWSIM/AWSIM_Data/globalgamemanagers"
+if [[ -f ${gg_file} ]] && command -v md5sum >/dev/null 2>&1; then
+    gg_md5=$(md5sum "${gg_file}" | cut -d' ' -f1) &&
+        printf '{"awsim_dir": "/aichallenge/simulator/AWSIM", "globalgamemanagers_md5": "%s"}\n' \
+            "${gg_md5}" >"${log_dir}/awsim_fingerprint.json"
+fi
+
 echo "[INFO] Starting AWSIM: ${mode}.sh $*"
 exec bash "${script}" "$@"
