@@ -45,3 +45,26 @@ docstring を参照。MLflow上では `command=submission-v1` タグと `team` �
 commit id しか無いログから、mpc submoduleのローカルgit履歴を使って
 （`git show <hash>:multi_purpose_mpc_ros_custom/config/config.yaml`）
 `config_snapshot.yaml` を復元する。
+
+## 提出時点でのMLflow事前登録
+
+`create_submit_file.bash` は commit id の焼き込みに続けて、
+`racingkart-analysis` の `make register-submission` を呼び出す。これは
+mpc submoduleの作業ツリーから直接（redactionせず、自チームの私有MLflow
+サーバーにしか送らないため）`config.yaml`/`ref_vel.yaml` を読み、
+パラメータだけを記録した「pending」状態のMLflow runをその場で作成する。
+返ってきた run_id は `multi_purpose_mpc_ros_custom/config/MLFLOW_RUN_ID`
+にも焼き込まれ、`mpc_controller.py` が起動時ログに
+`mlflow_run_id: <id>` として出力する。
+
+これにより、公式評価システムからダウンロードした結果を取り込む際
+（`import_submission.py`）、ログから run_id が見つかれば
+`push_to_mlflow.py --run-id` でその同じrunにレース結果（メトリクス・
+サマリー）を追記するだけになり、新規runを作る場合のように「どの提出が
+どの結果に対応するか」をタイムスタンプで推測する必要がなくなる。
+run_idがログに無い場合（旧形式の提出・他チームの提出など）は従来通り
+新規runを作成する。
+
+MLflowサーバーに到達できない・登録に失敗した場合、`create_submit_file.bash`
+自体が失敗して提出tar.gzを作らない（提出物が記録なしで作られることを防ぐ
+ため、あえて止める設計）。
