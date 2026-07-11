@@ -6,7 +6,7 @@
 
 公式のAIチャレンジ提出・評価システムからダウンロードした走行結果
 （`rosbag2_autoware.mcap` + `autoware.log`）は
-`racingkart-analysis/submit_result/<id>/`（`.gitignore` 済み、コミット不要）
+`racingkart-analysis/submit_result/<build-id>/`（`.gitignore` 済み、コミット不要）
 に手動でコピーする。これを消費するツール（`import_submission.py`）と
 同じリポジトリ配下に置く。フォルダ名はダウンロード時に割り当てられる
 UUID または epoch ミリ秒で、1フォルダ = 1レース。
