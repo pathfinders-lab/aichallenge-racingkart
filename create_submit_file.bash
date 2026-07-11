@@ -7,6 +7,8 @@ cd "$SCRIPT_DIR"
 MPC_DIR="./aichallenge/workspace/src/aichallenge_submit/multi_purpose_mpc_ros_custom"
 GIT_VERSION_PATH="$MPC_DIR/multi_purpose_mpc_ros_custom/config/GIT_VERSION"
 
+trap 'rm -f "$GIT_VERSION_PATH"' EXIT
+
 MPC_HASH="$(git -C "$MPC_DIR" rev-parse --short HEAD)"
 if [ -n "$(git -C "$MPC_DIR" status --porcelain)" ]; then
     echo "WARNING: multi_purpose_mpc_ros_custom has uncommitted changes." >&2
@@ -18,5 +20,3 @@ else
 fi
 
 tar zcvf submit/aichallenge_submit.tar.gz -C ./aichallenge/workspace/src aichallenge_submit
-
-rm -f "$GIT_VERSION_PATH"
