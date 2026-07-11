@@ -15,6 +15,7 @@ vehicle/.env
 metadata.yaml
 output/
 outputs/
+submit_result/
 aichallenge/capture/
 
 # AI local notes (do not commit)
