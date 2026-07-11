@@ -21,7 +21,6 @@
         args="--config_path $(find-pkg-share multi_purpose_mpc_ros_custom)/config/config.yaml
               --ref_vel_path $(find-pkg-share multi_purpose_mpc_ros_custom)/config/ref_vel.yaml">
     <param name="use_sim_time" value="$(var use_sim_time)"/>
-    <param name="use_boost_acceleration" value="false"/>
     <param name="use_obstacle_avoidance" value="$(var use_obstacle_avoidance)"/>
     <param name="use_race_state_estimator" value="$(var use_race_state_estimator)"/>
     <param name="use_race_strategy_fsm" value="$(var use_race_strategy_fsm)"/>
