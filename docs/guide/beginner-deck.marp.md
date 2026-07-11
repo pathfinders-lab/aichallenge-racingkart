@@ -74,7 +74,7 @@ make dev          # AWSIM + Autoware を開発モードで起動
 make trial        # 6周計測 → 解析 → MLflow 記録まで自動
 make trial-quick  # 2周の素早い計測
 make optuna       # MPC パラメータを Bayesian 最適化（N 回自動試行）
-make eval         # 評価フローを一括実行（提出前の最終確認）
+make eval         # 評価実行 → 解析 → MLflow 記録まで自動（提出前の最終確認）
 make down         # コンテナ停止
 ```
 
@@ -143,7 +143,7 @@ make down         # コンテナ停止
 <div>
 
 ### 補足
-- ホストからの評価実行は `make eval`（= `docker compose up -d autoware-simulator-evaluation` + `awsim-request-start`）を使う
+- ホストからの評価実行は `make eval` を使う（評価コンテナ起動 → 完走待ち → `make down` → 解析まで自動）
 - 複数 Domain の並列起動は `make dev2` / `make dev3` / `make dev4` を使う
 
 </div>
@@ -185,10 +185,9 @@ make down         # コンテナ停止
 
 ### 手順
 1. `./docker_build.sh eval --submit submit/aichallenge_submit.tar.gz` で評価用イメージを作成
-2. `make eval` を実行（バックグラウンドで起動し、評価が自動進行する）
+2. `make eval` を実行（6周の評価が完走するまで待機し、`make down` → 解析 → MLflow 記録まで自動）
 3. `output/<timestamp>/` に結果が保存される
 4. `/output/latest/d1` で最新結果を確認
-5. 終了後は **`make down` で停止**（自動で片付かない）
 
 </div>
 

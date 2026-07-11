@@ -202,11 +202,77 @@ gate1 gate2 gate3: simulator autoware-simulator
 	@echo "Start safety gate simulation (AWSIM + Autoware)"
 	@echo "To stop: make down  (docker compose down --remove-orphans)"
 
+# Evaluation run on the official eval image (6 laps, ~8 min), then the same
+# analyze pipeline as trial (COMMAND=eval LAPS=6). The eval image bakes in
+# /aichallenge and its run_evaluation.bash creates its own /output/<ts>/d1
+# (LOG_DIR cannot be injected), so the run dir is discovered by scanning for
+# the result files the autostart orchestrator writes after FinishALL
+# (d1-result-details.json / result-summary.json / motion_analytics-*.html);
+# only eval runs ever produce d1-result-details.json, so concurrent trial
+# dirs can never match. The eval container does not self-exit after finish
+# (Issue #60), hence the file watch instead of waiting on the container.
+# Deadline: session_timeout (600 s) + AWSIM boot + result finalization,
+# with margin.
 eval:
 	@echo "Start evaluation simulation (AWSIM + Autoware)"
 	docker compose up -d autoware-simulator-evaluation
 	$(MAKE) awsim-request-start
-	@echo "To stop: make down  (docker compose down --remove-orphans)"
+	@echo "[eval] AWSIM started (6 laps, ~8 min). Waiting for evaluation results..."
+	@start_ts="$(TIMESTAMP)"; deadline=$$(( $$(date +%s) + 1500 )); \
+	cleanup() { \
+	    if ! $(MAKE) --no-print-directory -s down > /dev/null 2>&1; then \
+	        echo "[eval] WARNING: 'make down' failed. Run it manually and check 'docker ps'."; \
+	    fi; \
+	}; \
+	find_run_dir() { \
+	    for d in $$(ls -1 output 2>/dev/null | grep -E '^[0-9]{8}-[0-9]{6}$$' | sort); do \
+	        [ "$$d" \< "$$start_ts" ] && continue; \
+	        if [ -f "output/$$d/d1/d1-result-details.json" ] \
+	           && [ -f "output/$$d/d1/result-summary.json" ] \
+	           && ls "output/$$d/d1/"motion_analytics-*.html > /dev/null 2>&1; then \
+	            echo "$$d"; \
+	            return 0; \
+	        fi; \
+	    done; \
+	    return 1; \
+	}; \
+	trap 'echo ""; echo "[eval] Interrupted. Stopping containers..."; cleanup; exit 130' INT TERM; \
+	run_dir=""; \
+	while :; do \
+	    if run_dir=$$(find_run_dir); then \
+	        echo "[eval] Evaluation finished (output/$$run_dir). Stopping containers..."; \
+	        break; \
+	    fi; \
+	    cid=$$(docker compose ps -aq autoware-simulator-evaluation 2>/dev/null | head -1); \
+	    st=$$(docker inspect -f '{{.State.Status}}' "$$cid" 2>/dev/null); \
+	    if [ -z "$$cid" ] || [ "$$st" = "exited" ]; then \
+	        if run_dir=$$(find_run_dir); then \
+	            echo "[eval] Evaluation finished (output/$$run_dir). Stopping containers..."; \
+	            break; \
+	        fi; \
+	        echo "[eval] ERROR: eval container stopped without result files. Check logs under output/."; \
+	        cleanup; \
+	        exit 1; \
+	    fi; \
+	    if [ $$(date +%s) -ge $$deadline ]; then \
+	        echo "[eval] ERROR: timed out waiting for evaluation results (25 min). Check logs under output/."; \
+	        cleanup; \
+	        exit 1; \
+	    fi; \
+	    sleep 2; \
+	done; \
+	trap - INT TERM; \
+	cleanup; \
+	OUTPUT="output/$$run_dir/d1"; \
+	if (cd racingkart-analysis && $(MAKE) --no-print-directory analyze OUTPUT="../$$OUTPUT" COMMAND=eval LAPS=6); then \
+	    echo "[eval] Done. → https://racingkart-results.pages.dev/runs/"; \
+	else \
+	    echo ""; \
+	    echo "[eval] ERROR: analyze failed. Your data is saved at: $$OUTPUT"; \
+	    echo "  Retry: cd racingkart-analysis && make analyze OUTPUT=\"../$$OUTPUT\" COMMAND=eval LAPS=6"; \
+	    echo "  Docs:  racingkart-analysis/docs/ops/fly-mlflow-setup.md"; \
+	    exit 1; \
+	fi
 
 # remote operation (docker compose up -d rviz2)
 rviz2:
