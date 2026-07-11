@@ -15,6 +15,9 @@ x-autoware-base: &autoware-base
     - TZ=Asia/Tokyo
     - RUN_MODE=${RUN_MODE:-}
     - SIM_MODE=${SIM_MODE:-}
+    # Bare form on purpose: stays UNSET in the container when unset on the
+    # host, so the launch-level $(env ...) default still applies (issue #104).
+    - MPC_CONFIG_PATH
     - CMD=${CMD:-}
     - COLCON_TRACE=${COLCON_TRACE:-}
     - ROS_HOME=${ROS_HOME:-}
