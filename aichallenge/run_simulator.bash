@@ -23,7 +23,7 @@ exec >"${log_dir}/awsim.log" 2>&1
 # version string). Best-effort: failure must never block the launch.
 gg_file="/aichallenge/simulator/AWSIM/AWSIM_Data/globalgamemanagers"
 if [[ -f ${gg_file} ]] && command -v md5sum >/dev/null 2>&1; then
-    gg_md5=$(md5sum "${gg_file}" | cut -d' ' -f1) &&
+    gg_md5=$(md5sum "${gg_file}") && gg_md5=${gg_md5%% *} && [[ -n ${gg_md5} ]] &&
         printf '{"awsim_dir": "/aichallenge/simulator/AWSIM", "globalgamemanagers_md5": "%s"}\n' \
             "${gg_md5}" >"${log_dir}/awsim_fingerprint.json"
 fi
