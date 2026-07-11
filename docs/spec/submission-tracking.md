@@ -5,9 +5,11 @@
 ## 公式提出結果のダウンロードと取り込み
 
 公式のAIチャレンジ提出・評価システムからダウンロードした走行結果
-（`rosbag2_autoware.mcap` + `autoware.log`）は `submit_result/<id>/`
-（`.gitignore` 済み、コミット不要）に手動でコピーする。フォルダ名は
-ダウンロード時に割り当てられる UUID または epoch ミリ秒で、1フォルダ = 1レース。
+（`rosbag2_autoware.mcap` + `autoware.log`）は
+`racingkart-analysis/submit_result/<build-id>/`（`.gitignore` 済み、コミット不要）
+に手動でコピーする。これを消費するツール（`import_submission.py`）と
+同じリポジトリ配下に置く。フォルダ名はダウンロード時に割り当てられる
+UUID または epoch ミリ秒で、1フォルダ = 1レース。
 
 ダウンロードできるのは常に自分（挑戦者）の1台分のみで、対戦相手（ライバル
 スクリプト・NPC）のデータは含まれない（rosbagのトピック構成で確認済み:
