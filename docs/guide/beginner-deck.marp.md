@@ -205,6 +205,42 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 
 ---
 
+## 公式提出フロー（提出 → 結果の取り込み）
+
+<div class="columns">
+
+<div>
+
+### 手順
+1. `./create_submit_file.bash` で提出用 tar.gz を作成
+   - MLflow にパラメータだけを事前登録し、commit id と run id を
+     `config/GIT_VERSION` / `config/MLFLOW_RUN_ID` に焼き込む
+   - 登録に失敗すると（サーバ到達不可など）tar.gz は作られない
+2. 公式ボードへ**手動で**アップロードする
+   （評価枠を消費する操作のため自動化しない）
+   → https://aichallenge-board.jsae.or.jp/
+3. 公式ボードで走行結果が出るのを待つ
+4. 結果（rosbag + ログ）を公式ボードからダウンロードし、
+   `racingkart-analysis/submit_result/<build-id>/` に手動でコピーする
+   （`<build-id>` はダウンロード時に割り当てられるフォルダ名。1フォルダ = 1レース）
+5. `cd racingkart-analysis && make import-submission` で MLflow に取り込む
+   - ログに `mlflow_run_id` があれば手順1で事前登録した run に
+     結果が追記される（無ければ新規 run を作成）
+
+</div>
+
+<div>
+
+### 補足
+- 手順2（公式ボードへのアップロード）は必ず手動で行う
+- 提出は評価枠を消費する操作なので慎重に
+- 詳しくは `docs/spec/submission-tracking.md` を参照
+
+</div>
+</div>
+
+---
+
 ## チューニングフロー（make trial → ダッシュボード）
 
 <div class="columns">
