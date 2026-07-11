@@ -205,6 +205,44 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 
 ---
 
+## 公式提出フロー（提出 → 結果の取り込み）
+
+<div class="columns">
+
+<div>
+
+### 手順
+1. `./create_submit_file.bash` で提出用 tar.gz を作成
+   - MLflow にパラメータだけを事前登録し、commit id と run id を
+     `config/GIT_VERSION` / `config/MLFLOW_RUN_ID` に焼き込む
+   - 登録に失敗すると（サーバ到達不可など）tar.gz は作られない
+2. `submit/upload_submission.py --comment "..."` で公式ボードに
+   アップロード（`submit/comment.bash` でコメント文言を生成できる）
+3. 公式ボード（aichallenge-board）で走行結果が出るのを待つ
+4. 結果（rosbag + ログ）を公式ボードからダウンロードし、
+   `submit_result/<id>/` に手動でコピーする
+5. `cd racingkart-analysis && make import-submission SRC=../submit_result`
+   で MLflow に取り込む
+   - ログに `mlflow_run_id` があれば手順1で事前登録した run に
+     結果が追記される（無ければ新規 run を作成）
+
+</div>
+
+<div>
+
+### 補足
+- `submit/upload_submission.py` は**ローカル専用スクリプト**
+  （`.gitignore` 済み、コミットしない）
+- 認証情報は環境変数 `AIC_BOARD_USERNAME` / `AIC_BOARD_PASSWORD`
+  （未設定なら対話プロンプト）
+- 提出は評価枠を消費するため確認プロンプトあり（`--yes` でスキップ）
+- 詳しくは `docs/spec/submission-tracking.md` を参照
+
+</div>
+</div>
+
+---
+
 ## チューニングフロー（make trial → ダッシュボード）
 
 <div class="columns">
