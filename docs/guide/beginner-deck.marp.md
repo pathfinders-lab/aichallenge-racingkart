@@ -221,10 +221,9 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
    → https://aichallenge-board.jsae.or.jp/
 3. 公式ボードで走行結果が出るのを待つ
 4. 結果（rosbag + ログ）を公式ボードからダウンロードし、
-   `submit_result/<id>/` に手動でコピーする
+   `racingkart-analysis/submit_result/<id>/` に手動でコピーする
    （`<id>` はダウンロード時に割り当てられるフォルダ名。1フォルダ = 1レース）
-5. `cd racingkart-analysis && make import-submission SRC=../submit_result`
-   で MLflow に取り込む
+5. `cd racingkart-analysis && make import-submission` で MLflow に取り込む
    - ログに `mlflow_run_id` があれば手順1で事前登録した run に
      結果が追記される（無ければ新規 run を作成）
 
