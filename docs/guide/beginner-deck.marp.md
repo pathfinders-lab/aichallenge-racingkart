@@ -216,8 +216,9 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
    - MLflow にパラメータだけを事前登録し、commit id と run id を
      `config/GIT_VERSION` / `config/MLFLOW_RUN_ID` に焼き込む
    - 登録に失敗すると（サーバ到達不可など）tar.gz は作られない
-2. 公式ボード（https://aichallenge-board.jsae.or.jp/）へ**手動で**
-   アップロードする（評価枠を消費する操作のため自動化しない）
+2. 公式ボードへ**手動で**アップロードする
+   （評価枠を消費する操作のため自動化しない）
+   → https://aichallenge-board.jsae.or.jp/
 3. 公式ボードで走行結果が出るのを待つ
 4. 結果（rosbag + ログ）を公式ボードからダウンロードし、
    `submit_result/<id>/` に手動でコピーする
