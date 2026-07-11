@@ -12,9 +12,12 @@
        AWSIM binary; older ones silently ignore /awsim/cmd. -->
   <arg name="use_official_boost" default="true"/>
 
+  <!-- MPC_CONFIG_PATH lets one vehicle in a multi-vehicle trial run an
+       alternate MPC config (e.g. a slower preset) without a second
+       worktree/build; unset means the packaged default (issue #104). -->
   <node pkg="multi_purpose_mpc_ros_custom" exec="run_mpc_controller.bash"
         name="mpc_controller" output="screen"
-        args="--config_path $(find-pkg-share multi_purpose_mpc_ros_custom)/config/config.yaml
+        args="--config_path $(env MPC_CONFIG_PATH $(find-pkg-share multi_purpose_mpc_ros_custom)/config/config.yaml)
               --ref_vel_path $(find-pkg-share multi_purpose_mpc_ros_custom)/config/ref_vel.yaml">
     <param name="use_sim_time" value="$(var use_sim_time)"/>
     <param name="use_obstacle_avoidance" value="$(var use_obstacle_avoidance)"/>

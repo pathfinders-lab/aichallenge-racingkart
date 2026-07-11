@@ -179,10 +179,24 @@ trial2-quick: simulator
 
 # N-vehicle version of trial (7 laps; records /mpc/stats per vehicle; no analyze/MLflow).
 # Waits for FinishALL in awsim.log, then runs make down automatically.
+# Optional mixed-speed trial (issue #104): MPC_CONFIG_<n> gives vehicle n
+# an alternate MPC config (container path); unset vehicles keep the packaged
+# default, so plain `make trial3` behaves exactly as before. Example:
+#   make trial3 MPC_CONFIG_3=/aichallenge/workspace/src/aichallenge_submit/multi_purpose_mpc_ros_custom/multi_purpose_mpc_ros_custom/config/config_opponent_midspeed.yaml
+MPC_CONFIG_1 ?=
+MPC_CONFIG_2 ?=
+MPC_CONFIG_3 ?=
 trial3: SIM_MODE := trial3
 trial3: simulator
 	@echo "[trial3] AWSIM started (3 vehicles, 7 laps, ~7 min). Waiting for all laps (FinishALL)..."
-	@for p in 1 2 3; do LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p docker compose -p $$p up -d autoware; done
+	@for p in 1 2 3; do \
+		case $$p in 1) cfg="$(MPC_CONFIG_1)";; 2) cfg="$(MPC_CONFIG_2)";; 3) cfg="$(MPC_CONFIG_3)";; esac; \
+		if [ -n "$$cfg" ]; then \
+			LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p MPC_CONFIG_PATH="$$cfg" docker compose -p $$p up -d autoware; \
+		else \
+			LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p docker compose -p $$p up -d autoware; \
+		fi; \
+	done
 	$(call WAIT_AWSIM_THEN_DOWN,trial3)
 	@echo "[trial3] Done. rosbags saved at: output/$(TIMESTAMP)/d1, output/$(TIMESTAMP)/d2, output/$(TIMESTAMP)/d3"
 
@@ -191,7 +205,14 @@ trial3: simulator
 trial3-quick: SIM_MODE := trial3-quick
 trial3-quick: simulator
 	@echo "[trial3-quick] AWSIM started (3 vehicles, 3 laps, ~3.5 min). Waiting for all laps (FinishALL)..."
-	@for p in 1 2 3; do LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p docker compose -p $$p up -d autoware; done
+	@for p in 1 2 3; do \
+		case $$p in 1) cfg="$(MPC_CONFIG_1)";; 2) cfg="$(MPC_CONFIG_2)";; 3) cfg="$(MPC_CONFIG_3)";; esac; \
+		if [ -n "$$cfg" ]; then \
+			LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p MPC_CONFIG_PATH="$$cfg" docker compose -p $$p up -d autoware; \
+		else \
+			LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p docker compose -p $$p up -d autoware; \
+		fi; \
+	done
 	$(call WAIT_AWSIM_THEN_DOWN,trial3-quick)
 	@echo "[trial3-quick] Done. rosbags saved at: output/$(TIMESTAMP)/d1, output/$(TIMESTAMP)/d2, output/$(TIMESTAMP)/d3"
 
