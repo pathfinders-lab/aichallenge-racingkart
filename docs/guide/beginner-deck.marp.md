@@ -222,6 +222,7 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 3. 公式ボードで走行結果が出るのを待つ
 4. 結果（rosbag + ログ）を公式ボードからダウンロードし、
    `submit_result/<id>/` に手動でコピーする
+   （`<id>` はダウンロード時に割り当てられるフォルダ名。1フォルダ = 1レース）
 5. `cd racingkart-analysis && make import-submission SRC=../submit_result`
    で MLflow に取り込む
    - ログに `mlflow_run_id` があれば手順1で事前登録した run に
