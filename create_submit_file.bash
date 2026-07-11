@@ -9,6 +9,10 @@ GIT_VERSION_PATH="$MPC_DIR/multi_purpose_mpc_ros_custom/config/GIT_VERSION"
 
 trap 'rm -f "$GIT_VERSION_PATH"' EXIT
 
+# Pre-clean any stale GIT_VERSION file from a previously interrupted run
+# before the dirty check runs, to prevent false-dirty results
+rm -f "$GIT_VERSION_PATH"
+
 MPC_HASH="$(git -C "$MPC_DIR" rev-parse --short HEAD)"
 if [ -n "$(git -C "$MPC_DIR" status --porcelain)" ]; then
     echo "WARNING: multi_purpose_mpc_ros_custom has uncommitted changes." >&2
