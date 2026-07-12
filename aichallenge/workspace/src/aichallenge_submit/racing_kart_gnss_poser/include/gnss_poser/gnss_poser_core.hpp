@@ -105,6 +105,7 @@ private:
   int plane_zone_;
   geometry_msgs::msg::Quaternion prev_orientation_;
   double gnss_change_threshold_;
+  double unknown_position_covariance_;
 
   autoware_sensing_msgs::msg::GnssInsOrientationStamped::SharedPtr
     msg_gnss_ins_orientation_stamped_;

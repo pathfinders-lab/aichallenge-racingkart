@@ -56,11 +56,18 @@
     </group>
     <group>
       <push-ros-namespace namespace="gnss"/>
+      <!-- AWSIM NavSatFix declares no covariance; the node fallback (10.0)
+           makes the EKF treat GNSS as a sigma=10m measurement and localization
+           effectively dead-reckons. Measured AWSIM GNSS noise is ~1cm, so
+           declare a realistic value in simulation only. -->
+      <let name="gnss_unknown_position_covariance" value="0.01" if="$(var simulation)"/>
+      <let name="gnss_unknown_position_covariance" value="10.0" unless="$(var simulation)"/>
       <include file="$(find-pkg-share racing_kart_gnss_poser)/launch/gnss_poser.launch.xml">
         <arg name="input_topic_fix" value="nav_sat_fix"/>
         <arg name="output_topic_gnss_pose" value="pose"/>
         <arg name="output_topic_gnss_fixed" value="gnss_fixed"/>
         <arg name="output_topic_gnss_pose_cov" value="pose_with_covariance"/>
+        <arg name="unknown_position_covariance" value="$(var gnss_unknown_position_covariance)"/>
       </include>
     </group>
   </group>

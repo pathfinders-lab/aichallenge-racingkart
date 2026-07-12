@@ -35,6 +35,9 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   use_gnss_ins_orientation_(declare_parameter("use_gnss_ins_orientation", true)),
   plane_zone_(declare_parameter<int>("plane_zone", 9)),
   gnss_change_threshold_(declare_parameter<double>("gnss_change_threshold")),
+  // Position covariance assumed when NavSatFix does not declare one
+  // (position_covariance_type == COVARIANCE_TYPE_UNKNOWN)
+  unknown_position_covariance_(declare_parameter("unknown_position_covariance", 10.0)),
   msg_gnss_ins_orientation_stamped_(
     std::make_shared<autoware_sensing_msgs::msg::GnssInsOrientationStamped>())
 {
@@ -163,11 +166,14 @@ void GNSSPoser::callbackNavSatFix(
   gnss_base_pose_cov_msg.header = gnss_base_pose_msg.header;
   gnss_base_pose_cov_msg.pose.pose = gnss_base_pose_msg.pose;
   gnss_base_pose_cov_msg.pose.covariance[7 * 0] =
-    canGetCovariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[0] : 10.0;
+    canGetCovariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[0]
+                                           : unknown_position_covariance_;
   gnss_base_pose_cov_msg.pose.covariance[7 * 1] =
-    canGetCovariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[4] : 10.0;
+    canGetCovariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[4]
+                                           : unknown_position_covariance_;
   gnss_base_pose_cov_msg.pose.covariance[7 * 2] =
-    canGetCovariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[8] : 10.0;
+    canGetCovariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[8]
+                                           : unknown_position_covariance_;
 
   if (use_gnss_ins_orientation_) {
     gnss_base_pose_cov_msg.pose.covariance[7 * 3] =
