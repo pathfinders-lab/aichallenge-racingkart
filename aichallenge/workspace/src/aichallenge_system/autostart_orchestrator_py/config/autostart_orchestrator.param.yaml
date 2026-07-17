@@ -21,6 +21,9 @@
       - /localization/kinematic_state
       - /mpc/stats
       - /sensing/gnss/pose_with_covariance
+      # AWSIM publishes per-vehicle positions natively in each vehicle
+      # domain (multi-vehicle trials; absent in solo runs).
+      - /v2x/vehicle_positions
       # Published only when use_race_state_estimator / use_race_strategy_fsm
       # are enabled; recorded as no-message topics otherwise.
       - /strategy/race_state
