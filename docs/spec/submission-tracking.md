@@ -2,7 +2,16 @@
 
 > 仕様ドキュメント（現仕様の正）。文書運用方針は [docs/README.md](../README.md) を参照。
 
-## 公式提出結果のダウンロードと取り込み
+## 提出と結果取り込みの現行フロー（自動）
+
+提出は本体リポ直下の `submit_from_mpc.bash` で行う（mpc コミット指定 →
+隔離 worktree で tar 作成・MLflow 事前登録 → ボードへアップロード。確認
+プロンプトあり、`--dry-run` で提出直前まで確認可能）。評価完了後の結果・
+rosbag の取得と MLflow への追記は `racingkart-analysis` の `make sync-board`
+が自動で行う（build_id で照合し未取り込み分のみ処理、冪等）。
+以下の手動ダウンロード手順は、sync が使えない場合のフォールバック。
+
+## 公式提出結果のダウンロードと取り込み（手動フォールバック）
 
 公式のAIチャレンジ提出・評価システムからダウンロードした走行結果
 （`rosbag2_autoware.mcap` + `autoware.log`）は

@@ -52,8 +52,10 @@ style: |
 # 1. サブモジュールを初期化（clone 直後に必須）
 git submodule update --init --recursive
 
-# 2. 解析ツールの Python 環境を構築
-cd racingkart-analysis && make install && cd ..
+# 2. 解析ツールの Python 環境を構築（.env が無ければ生成し、記入案内が出る）
+cd racingkart-analysis
+make install
+cd ..
 
 # 3. 開発用 Docker イメージをビルド（初回のみ）
 ./docker_build.sh dev
@@ -211,29 +213,44 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 
 <div>
 
-### 手順
-1. `./create_submit_file.bash` で提出用 tar.gz を作成
-   - MLflow にパラメータだけを事前登録し、commit id と run id を
-     `config/GIT_VERSION` / `config/MLFLOW_RUN_ID` に焼き込む
-   - 登録に失敗すると（サーバ到達不可など）tar.gz は作られない
-2. 公式ボードへ**手動で**アップロードする
-   （評価枠を消費する操作のため自動化しない）
-   → https://aichallenge-board.jsae.or.jp/
-3. 公式ボードで走行結果が出るのを待つ
-4. 結果（rosbag + ログ）を公式ボードからダウンロードし、
-   `racingkart-analysis/submit_result/<build-id>/` に手動でコピーする
-   （`<build-id>` はダウンロード時に割り当てられるフォルダ名。1フォルダ = 1レース）
-5. `cd racingkart-analysis && make import-submission` で MLflow に取り込む
-   - ログに `mlflow_run_id` があれば手順1で事前登録した run に
-     結果が追記される（無ければ新規 run を作成）
+### 手順（ワンコマンド）
+```bash
+# 引数なし = mpc の最新 origin/main を提出（確認プロンプトあり）
+./submit_from_mpc.bash
+# コミット/ブランチの指定や目的の付記（15文字まで）も可能
+./submit_from_mpc.bash <mpc-commit> -p "目的の短文"
+# 提出せずゲート・サマリー確認だけしたいとき
+./submit_from_mpc.bash --dry-run
+```
+1. origin/develop から隔離 worktree を作り、mpc だけ指定コミットへ
+   （共有チェックアウトは触らない。worktree は終了時に自動削除）
+2. MLflow に run を事前登録し `config/GIT_VERSION` /
+   `config/MLFLOW_RUN_ID` を焼き込んで tar.gz 作成
+3. サマリー（sha256・順位・当日提出数）を表示 → `yes` で提出
+4. 成功すると `submit/.submission_log` に台帳追記し、提出コミットへ
+   `submitted/<連番ID>` タグを mpc に自動 push
+   （スカッシュ&マージでブランチが消えても提出 sha を辿れる）
+5. 評価完了後、結果・rosbag を自動取得して
+   事前登録した run に解析付きで追記:
+   ```bash
+   cd racingkart-analysis
+   make sync-board
+   ```
 
 </div>
 
 <div>
 
 ### 補足
-- 手順2（公式ボードへのアップロード）は必ず手動で行う
-- 提出は評価枠を消費する操作なので慎重に
+- 認証は `racingkart-analysis/.env` に `AIC_BOARD_USERNAME` /
+  `AIC_BOARD_PASSWORD` を書く（MLflow 設定と同じ場所、gitignore 済み。
+  `make install` を再実行すると未記入項目の案内が表示される）。
+  **親リポ直下の `.env` は git 追跡されているので書かないこと**
+- 提出は**1日10回の評価枠を消費**する。3分間隔・当日上限は
+  ツールが自己チェックして超過前にブロックする
+- **エラーが出ても即再実行しない**（再実行=新規提出）。
+  まずボードを確認してから判断する
+- 旧手動フロー（tar のみ作成）は `./create_submit_file.bash`
 - 詳しくは `docs/spec/submission-tracking.md` を参照
 
 </div>
@@ -367,7 +384,7 @@ COMPOSE_FILE=docker-compose.yml:docker-compose.gpu.yml:docker-compose.sound.yml
 
 ### セットアップ
 - **サブモジュールが空 / 古い** → `git submodule update --init --recursive` を実行する
-- **`uv` が見つからない / 解析ツールが動かない** → `cd racingkart-analysis && make install` を実行する
+- **`uv` が見つからない / 解析ツールが動かない** → `racingkart-analysis` の中で `make install` を実行する
 - **`install/setup.bash` がない** → `make autoware-build` を先に実行する
 
 </div>
