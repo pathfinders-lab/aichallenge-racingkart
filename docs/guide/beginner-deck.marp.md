@@ -215,10 +215,12 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 
 ### 手順（ワンコマンド）
 ```bash
-# mpc の任意コミットを tar 化して提出まで（確認プロンプトあり）
-./submit_from_mpc.bash <mpc-commit> -p "提出目的の短文"
+# 引数なし = mpc の最新 origin/main を提出（確認プロンプトあり）
+./submit_from_mpc.bash
+# コミット/ブランチの指定や目的の付記（15文字まで）も可能
+./submit_from_mpc.bash <mpc-commit> -p "目的の短文"
 # 提出せずゲート・サマリー確認だけしたいとき
-./submit_from_mpc.bash <mpc-commit> --dry-run
+./submit_from_mpc.bash --dry-run
 ```
 1. origin/develop から隔離 worktree を作り、mpc だけ指定コミットへ
    （共有チェックアウトは触らない。worktree は終了時に自動削除）
