@@ -27,6 +27,8 @@ TOPICS=(
     "/localization/acceleration"
     "/localization/kinematic_state"
     "/mpc/stats"
+    # AWSIM publishes per-vehicle positions natively in each vehicle domain
+    "/v2x/vehicle_positions"
     # Published only when use_race_state_estimator is enabled; absent otherwise
     "/strategy/race_state"
     # Published only when use_race_strategy_fsm is enabled; absent otherwise
