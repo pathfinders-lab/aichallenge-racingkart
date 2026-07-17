@@ -146,6 +146,15 @@ if [ "$RC" -ne 0 ]; then
     exit "$RC"
 fi
 echo "${TODAY} ${ID} main ${SHA256} ${COMMENT}" >>"$LOG"
+# Feature branches are usually squash-merged and deleted afterwards, which
+# would orphan the exact submitted sha. Pin it with a tag on the mpc remote
+# so GIT_VERSION / MLflow always point at a reachable commit.
+if git -C "$MPC_DIR" tag "submitted/${ID}" 2>/dev/null &&
+    git -C "$MPC_DIR" push -q origin "refs/tags/submitted/${ID}" 2>/dev/null; then
+    echo "Tagged mpc ${MPC_SHA} as submitted/${ID} (survives squash & merge)."
+else
+    echo "WARNING: could not push tag submitted/${ID} (the submission itself succeeded)." >&2
+fi
 echo "Submitted ${ID}. After the eval finishes, fetch the results with:"
 echo "  cd racingkart-analysis"
 echo "  make sync-board"

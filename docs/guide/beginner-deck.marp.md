@@ -227,7 +227,9 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 2. MLflow に run を事前登録し `config/GIT_VERSION` /
    `config/MLFLOW_RUN_ID` を焼き込んで tar.gz 作成
 3. サマリー（sha256・順位・当日提出数）を表示 → `yes` で提出
-4. 成功すると `submit/.submission_log` に台帳追記
+4. 成功すると `submit/.submission_log` に台帳追記し、提出コミットへ
+   `submitted/<連番ID>` タグを mpc に自動 push
+   （スカッシュ&マージでブランチが消えても提出 sha を辿れる）
 5. 評価完了後、結果・rosbag を自動取得して
    事前登録した run に解析付きで追記:
    ```bash
