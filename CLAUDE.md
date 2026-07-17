@@ -47,6 +47,8 @@ Autoware Universe をベースとした自動運転ソフトウェアを開発�
 
 - `aichallenge/` — メイン開発ディレクトリ（ROS2パッケージ群）
 - `aichallenge/README.md` — エントリポイントまとめ
+- `docs/guide/development-process.md` — **開発プロセスの正**
+  （チケット・設計・実装・検証・PR・提出・情報の三層）。本ファイルはその要約
 - `docs/guide/beginner-deck.marp.md` — 基本操作・検証フローのガイド
   （build → dev → trial → down）。検証・実験の手順を組む前に必ず参照する
 - `docker-compose.yml` — サービス定義（触る際は注意）
@@ -57,8 +59,8 @@ Autoware Universe をベースとした自動運転ソフトウェアを開発�
 
 ## Issue Workflow
 
-- 今後やりたい作業は GitHub Issue としてチケット化する（1 Issue ≒ 1 PR の粒度。
-  それより大きい作業は Issue を分割する）
+- 今後やりたい作業は GitHub Issue としてチケット化する（まとまった作業 = 1 Issue +
+  複数 PR。細かく割りすぎない。途中の PR は `Refs #N`、最後の PR で `Closes #N`）
 - 検証したこと（実機 trial・ベンチマーク・調査など）の結果・ログ・判断は、
   対応する Issue のコメントに記録する
 - PR 本文で対応 Issue を必ず参照する（完了させる場合は `Closes #N`、
@@ -76,7 +78,6 @@ Autoware Universe をベースとした自動運転ソフトウェアを開発�
 - PR 作成時は `Language > PR Description` に応じて
   `~/.claude/PULL_REQUEST_TEMPLATE/japanese.md` を
   `--body-file` で指定する
-- PR Review: @keigo06 @copilot
 - マージは **Squash and Merge** のみ
 - マージ後はブランチを削除する
 - `main` は `upstream` の変更を反映させる場所とする（fork sync を行う）
