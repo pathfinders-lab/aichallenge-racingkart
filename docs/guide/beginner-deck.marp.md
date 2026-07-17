@@ -232,8 +232,9 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 <div>
 
 ### 補足
-- 認証は `~/.aic_board_creds`（`AIC_BOARD_USERNAME/PASSWORD`、
-  chmod 600）か環境変数で渡す
+- 認証は `racingkart-analysis/.env` に `AIC_BOARD_USERNAME` /
+  `AIC_BOARD_PASSWORD` を書く（MLflow 設定と同じ場所、gitignore 済み）。
+  **親リポ直下の `.env` は git 追跡されているので書かないこと**
 - 提出は**1日10回の評価枠を消費**する。3分間隔・当日上限は
   ツールが自己チェックして超過前にブロックする
 - **エラーが出ても即再実行しない**（再実行=新規提出）。

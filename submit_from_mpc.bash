@@ -7,14 +7,16 @@
 #
 #   MPC_COMMIT  mpc (multi_purpose_mpc_ros_custom) commit/branch to package.
 #               Defaults to origin/main.
-#   -p TEXT     Short purpose appended to the board comment.
+#   -p TEXT     Short purpose appended to the board comment (max 15 chars).
 #   --dry-run   Stop right before the actual upload (gates + summary only).
 #   --yes       Skip the upload confirmation prompt (non-interactive use).
 #
 # Shared checkouts are never touched: the tarball is built from origin/develop
 # in a throwaway worktree under .claude/worktrees/ (unique per run, removed on
 # exit even on failure), with only the mpc submodule moved to MPC_COMMIT.
-# Credentials: exported AIC_BOARD_USERNAME/PASSWORD, or ~/.aic_board_creds.
+# Credentials: AIC_BOARD_USERNAME/PASSWORD from racingkart-analysis/.env
+# (gitignored there — NEVER the parent .env, which is git-tracked), from the
+# environment, or from ~/.aic_board_creds.
 # Submitting consumes one of the team's 10 daily eval slots.
 set -euo pipefail
 
@@ -51,10 +53,25 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+# Keep board comments short: "<id> mpc@<sha>" already traces the submission,
+# so the free-form purpose may add at most 15 characters.
+if [ "${#PURPOSE}" -gt 15 ]; then
+    echo "ERROR: purpose is ${#PURPOSE} chars (max 15): ${PURPOSE}" >&2
+    exit 1
+fi
+
 if [ ! -f "$ANALYSIS_DIR/Makefile" ]; then
     echo "ERROR: racingkart-analysis not found at $ANALYSIS_DIR" >&2
     echo "       (run 'git submodule update --init racingkart-analysis' first)" >&2
     exit 1
+fi
+# Load credentials: racingkart-analysis/.env first (also carries the MLflow
+# settings), then ~/.aic_board_creds as an override if present.
+if [ -f "$ANALYSIS_DIR/.env" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    . "$ANALYSIS_DIR/.env"
+    set +a
 fi
 if [ -f "$HOME/.aic_board_creds" ]; then
     set -a
