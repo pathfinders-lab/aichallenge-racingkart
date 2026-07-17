@@ -92,9 +92,13 @@ flowchart LR
 - **エージェントが提出を実行してよいのは、人間がその提出を明示的に依頼した時だけ**
   （提出は 1 日 10 回の評価枠を消費する。自律的・先回り・定期実行での提出は禁止。
   実行時は `--dry-run` でサマリーを確認・報告してから本番を実行する）
-- 提出後: 評価完了を待って `cd racingkart-analysis && make sync-board`
-  （結果・rosbag の取得と MLflow への追記まで自動。手動フォールバックは
-  `docs/spec/submission-tracking.md` 参照）
+- 提出後: 評価完了を待って以下を実行（結果・rosbag の取得と MLflow への
+  追記まで自動。手動フォールバックは `docs/spec/submission-tracking.md` 参照）
+
+  ```bash
+  cd racingkart-analysis
+  make sync-board
+  ```
 
 ## 7. ツール・エージェントの運用
 

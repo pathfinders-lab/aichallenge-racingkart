@@ -146,4 +146,6 @@ if [ "$RC" -ne 0 ]; then
     exit "$RC"
 fi
 echo "${TODAY} ${ID} main ${SHA256} ${COMMENT}" >>"$LOG"
-echo "Submitted ${ID}. After the eval finishes: cd racingkart-analysis && make sync-board"
+echo "Submitted ${ID}. After the eval finishes, fetch the results with:"
+echo "  cd racingkart-analysis"
+echo "  make sync-board"

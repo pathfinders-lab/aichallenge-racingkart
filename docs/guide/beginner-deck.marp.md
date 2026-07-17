@@ -52,8 +52,10 @@ style: |
 # 1. サブモジュールを初期化（clone 直後に必須）
 git submodule update --init --recursive
 
-# 2. 解析ツールの Python 環境を構築
-cd racingkart-analysis && make install && cd ..
+# 2. 解析ツールの Python 環境を構築（.env が無ければ生成し、記入案内が出る）
+cd racingkart-analysis
+make install
+cd ..
 
 # 3. 開発用 Docker イメージをビルド（初回のみ）
 ./docker_build.sh dev
@@ -224,8 +226,12 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
    `config/MLFLOW_RUN_ID` を焼き込んで tar.gz 作成
 3. サマリー（sha256・順位・当日提出数）を表示 → `yes` で提出
 4. 成功すると `submit/.submission_log` に台帳追記
-5. 評価完了後: `cd racingkart-analysis && make sync-board`
-   → 結果・rosbag を自動取得し、事前登録した run に解析付きで追記
+5. 評価完了後、結果・rosbag を自動取得して
+   事前登録した run に解析付きで追記:
+   ```bash
+   cd racingkart-analysis
+   make sync-board
+   ```
 
 </div>
 
@@ -233,7 +239,8 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 
 ### 補足
 - 認証は `racingkart-analysis/.env` に `AIC_BOARD_USERNAME` /
-  `AIC_BOARD_PASSWORD` を書く（MLflow 設定と同じ場所、gitignore 済み）。
+  `AIC_BOARD_PASSWORD` を書く（MLflow 設定と同じ場所、gitignore 済み。
+  `make install` を再実行すると未記入項目の案内が表示される）。
   **親リポ直下の `.env` は git 追跡されているので書かないこと**
 - 提出は**1日10回の評価枠を消費**する。3分間隔・当日上限は
   ツールが自己チェックして超過前にブロックする
@@ -373,7 +380,7 @@ COMPOSE_FILE=docker-compose.yml:docker-compose.gpu.yml:docker-compose.sound.yml
 
 ### セットアップ
 - **サブモジュールが空 / 古い** → `git submodule update --init --recursive` を実行する
-- **`uv` が見つからない / 解析ツールが動かない** → `cd racingkart-analysis && make install` を実行する
+- **`uv` が見つからない / 解析ツールが動かない** → `racingkart-analysis` の中で `make install` を実行する
 - **`install/setup.bash` がない** → `make autoware-build` を先に実行する
 
 </div>
