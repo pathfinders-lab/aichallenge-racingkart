@@ -158,13 +158,36 @@ dev2 dev3 dev4: simulator
 	for p in $$(seq 1 $$N); do LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p docker compose -p $$p up -d autoware; done; \
 	echo "To Stop: make down"
 
+# Per-vehicle MPC config for multi-vehicle trials (issue #104): MPC_CONFIG_<n>
+# gives vehicle n an alternate MPC config (container path); unset vehicles keep
+# the packaged default. Example (make a backmarker of vehicle 2):
+#   make trial3 MPC_CONFIG_2=/aichallenge/workspace/src/aichallenge_submit/multi_purpose_mpc_ros_custom/multi_purpose_mpc_ros_custom/config/config_opponent_slow.yaml
+MPC_CONFIG_1 ?=
+MPC_CONFIG_2 ?=
+MPC_CONFIG_3 ?=
+# Time-domain MPCC opt-in (Step 5). Default false keeps the legacy MPC
+# everywhere, so a plain `make trial*` and a race submission are unchanged.
+# USE_MPCC=true runs the EGO (vehicle 1) on MPCC; opponents (2/3) always stay
+# legacy so they can play backmarkers. For single-vehicle `make trial`, the
+# exported var reaches the container via docker-compose's USE_MPCC passthrough.
+#   make trial  USE_MPCC=true                          # solo on MPCC
+#   make trial3 USE_MPCC=true MPC_CONFIG_2=<slow.yaml>  # MPCC ego vs slow opp
+USE_MPCC ?= false
+export USE_MPCC
+
 # N-vehicle version of trial (7 laps; records /mpc/stats per vehicle; no analyze/MLflow —
 # see docs/superpowers/specs/2026-07-06-multi-vehicle-trial-design.md for why).
 # Waits for FinishALL in awsim.log, then runs make down automatically.
 trial2: SIM_MODE := trial2
 trial2: simulator
 	@echo "[trial2] AWSIM started (2 vehicles, 7 laps, ~7 min). Waiting for all laps (FinishALL)..."
-	@for p in 1 2; do LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p docker compose -p $$p up -d autoware; done
+	@for p in 1 2; do \
+		case $$p in 1) cfg="$(MPC_CONFIG_1)";; 2) cfg="$(MPC_CONFIG_2)";; esac; \
+		envp="LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p"; \
+		[ -n "$$cfg" ] && envp="$$envp MPC_CONFIG_PATH=$$cfg"; \
+		if [ "$$p" = "1" ]; then envp="$$envp USE_MPCC=$(USE_MPCC)"; else envp="$$envp USE_MPCC=false"; fi; \
+		env $$envp docker compose -p $$p up -d autoware; \
+	done
 	$(call WAIT_AWSIM_THEN_DOWN,trial2)
 	@echo "[trial2] Done. rosbags saved at: output/$(TIMESTAMP)/d1, output/$(TIMESTAMP)/d2"
 
@@ -173,29 +196,27 @@ trial2: simulator
 trial2-quick: SIM_MODE := trial2-quick
 trial2-quick: simulator
 	@echo "[trial2-quick] AWSIM started (2 vehicles, 3 laps, ~3.5 min). Waiting for all laps (FinishALL)..."
-	@for p in 1 2; do LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p docker compose -p $$p up -d autoware; done
+	@for p in 1 2; do \
+		case $$p in 1) cfg="$(MPC_CONFIG_1)";; 2) cfg="$(MPC_CONFIG_2)";; esac; \
+		envp="LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p"; \
+		[ -n "$$cfg" ] && envp="$$envp MPC_CONFIG_PATH=$$cfg"; \
+		if [ "$$p" = "1" ]; then envp="$$envp USE_MPCC=$(USE_MPCC)"; else envp="$$envp USE_MPCC=false"; fi; \
+		env $$envp docker compose -p $$p up -d autoware; \
+	done
 	$(call WAIT_AWSIM_THEN_DOWN,trial2-quick)
 	@echo "[trial2-quick] Done. rosbags saved at: output/$(TIMESTAMP)/d1, output/$(TIMESTAMP)/d2"
 
 # N-vehicle version of trial (7 laps; records /mpc/stats per vehicle; no analyze/MLflow).
 # Waits for FinishALL in awsim.log, then runs make down automatically.
-# Optional mixed-speed trial (issue #104): MPC_CONFIG_<n> gives vehicle n
-# an alternate MPC config (container path); unset vehicles keep the packaged
-# default, so plain `make trial3` behaves exactly as before. Example:
-#   make trial3 MPC_CONFIG_3=/aichallenge/workspace/src/aichallenge_submit/multi_purpose_mpc_ros_custom/multi_purpose_mpc_ros_custom/config/config_opponent_midspeed.yaml
-MPC_CONFIG_1 ?=
-MPC_CONFIG_2 ?=
-MPC_CONFIG_3 ?=
 trial3: SIM_MODE := trial3
 trial3: simulator
 	@echo "[trial3] AWSIM started (3 vehicles, 7 laps, ~7 min). Waiting for all laps (FinishALL)..."
 	@for p in 1 2 3; do \
 		case $$p in 1) cfg="$(MPC_CONFIG_1)";; 2) cfg="$(MPC_CONFIG_2)";; 3) cfg="$(MPC_CONFIG_3)";; esac; \
-		if [ -n "$$cfg" ]; then \
-			LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p MPC_CONFIG_PATH="$$cfg" docker compose -p $$p up -d autoware; \
-		else \
-			LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p docker compose -p $$p up -d autoware; \
-		fi; \
+		envp="LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p"; \
+		[ -n "$$cfg" ] && envp="$$envp MPC_CONFIG_PATH=$$cfg"; \
+		if [ "$$p" = "1" ]; then envp="$$envp USE_MPCC=$(USE_MPCC)"; else envp="$$envp USE_MPCC=false"; fi; \
+		env $$envp docker compose -p $$p up -d autoware; \
 	done
 	$(call WAIT_AWSIM_THEN_DOWN,trial3)
 	@echo "[trial3] Done. rosbags saved at: output/$(TIMESTAMP)/d1, output/$(TIMESTAMP)/d2, output/$(TIMESTAMP)/d3"
@@ -207,11 +228,10 @@ trial3-quick: simulator
 	@echo "[trial3-quick] AWSIM started (3 vehicles, 3 laps, ~3.5 min). Waiting for all laps (FinishALL)..."
 	@for p in 1 2 3; do \
 		case $$p in 1) cfg="$(MPC_CONFIG_1)";; 2) cfg="$(MPC_CONFIG_2)";; 3) cfg="$(MPC_CONFIG_3)";; esac; \
-		if [ -n "$$cfg" ]; then \
-			LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p MPC_CONFIG_PATH="$$cfg" docker compose -p $$p up -d autoware; \
-		else \
-			LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p docker compose -p $$p up -d autoware; \
-		fi; \
+		envp="LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p"; \
+		[ -n "$$cfg" ] && envp="$$envp MPC_CONFIG_PATH=$$cfg"; \
+		if [ "$$p" = "1" ]; then envp="$$envp USE_MPCC=$(USE_MPCC)"; else envp="$$envp USE_MPCC=false"; fi; \
+		env $$envp docker compose -p $$p up -d autoware; \
 	done
 	$(call WAIT_AWSIM_THEN_DOWN,trial3-quick)
 	@echo "[trial3-quick] Done. rosbags saved at: output/$(TIMESTAMP)/d1, output/$(TIMESTAMP)/d2, output/$(TIMESTAMP)/d3"

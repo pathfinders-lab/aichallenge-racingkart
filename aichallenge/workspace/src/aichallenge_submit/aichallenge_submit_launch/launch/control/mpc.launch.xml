@@ -26,5 +26,9 @@
     <param name="use_standstill_recovery" value="$(var use_standstill_recovery)"/>
     <param name="use_official_boost" value="$(var use_official_boost)"/>
     <param name="use_stats" value="true"/>
+    <!-- Time-domain MPCC opt-in. Unset (or false) keeps the legacy MPC, so
+         plain `make trial` / a race submission are unchanged. Set USE_MPCC=true
+         on the host to switch this vehicle to the MPCC controller. -->
+    <param name="use_mpcc" value="$(env USE_MPCC false)"/>
   </node>
 </launch>
