@@ -179,6 +179,53 @@ make down         # コンテナ停止
 
 ---
 
+## MPCC を試す / 混走 trial
+
+<div class="columns">
+
+<div>
+
+### MPCC を有効にする（`USE_MPCC`）
+既定は**レガシー MPC**（`USE_MPCC` 未設定 = false）。提出やふだんの `make trial` は変わらない。
+時間ドメイン **MPCC** に切り替えるには `USE_MPCC=true` を付ける:
+
+```bash
+# ソロ計測を MPCC で走らせる
+make trial USE_MPCC=true
+
+# 混走で自車(1号車)だけ MPCC、相手はレガシー
+make trial3 USE_MPCC=true \
+  MPC_CONFIG_2=<相手config> \
+  MPC_CONFIG_3=<相手config>
+```
+
+- **自車 = 1 号車のみ MPCC**。相手（2/3 号車）は常にレガシーのまま（バックマーカー役）
+- 起動ログに `use_mpcc=true` / `MPCC runner ready` が出れば適用成功
+
+</div>
+
+<div>
+
+### 相手の速度を config で指定
+混走 (`trial2` / `trial3`) では `MPC_CONFIG_<n>` で **n 号車**に別 config を注入できる（未指定はパッケージ既定）。
+`multi_purpose_mpc_ros_custom/config/` の相手プリセット:
+
+| config | 役割 |
+|---|---|
+| `config_opponent_slow` | 周回遅れ級（lap ~86s）。追い越し検証の定番 |
+| `config_opponent_midspeed` | やや遅い相手（lap ~51s） |
+| `config_opponent_nearpace` | 同クラス（lap ~43s、自車素ペース相当） |
+| `config_opponent_defaultline82` | 強豪の既定ライン（lap ~47s） |
+| `config_opponent_handicap` | 先頭 18km/h cap（実レースで抜く相手の速度） |
+
+パスは**コンテナ内絶対パス**で渡す:
+`/aichallenge/workspace/src/aichallenge_submit/multi_purpose_mpc_ros_custom/multi_purpose_mpc_ros_custom/config/<名前>.yaml`
+
+</div>
+</div>
+
+---
+
 ## 評価フロー (提出前の確認)
 
 <div class="columns">
