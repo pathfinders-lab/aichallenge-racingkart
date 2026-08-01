@@ -18,8 +18,9 @@ x-autoware-base: &autoware-base
     # Bare form on purpose: stays UNSET in the container when unset on the
     # host, so the launch-level $(env ...) default still applies (issue #104).
     - MPC_CONFIG_PATH
-    # Same bare form: unset -> mpc.launch.xml's $(env USE_MPCC false) picks
-    # the legacy MPC. Set USE_MPCC=true to run the time-domain MPCC instead.
+    # Same bare form: unset -> mpc.launch.xml's $(env USE_MPCC true) picks
+    # the time-domain MPCC controller. Set USE_MPCC=false on the host to run
+    # the legacy MPC instead.
     - USE_MPCC
     - CMD=${CMD:-}
     - COLCON_TRACE=${COLCON_TRACE:-}
