@@ -3,13 +3,15 @@
 # in an isolated git worktree, then upload it to the aichallenge board.
 #
 # Usage:
-#   ./submit_from_mpc.bash [MPC_COMMIT] [-p "purpose"] [--dry-run] [--yes]
+#   ./submit_from_mpc.bash [MPC_COMMIT] [-p "purpose"] [--dry-run] [--yes] [--opponent-rank N]
 #
-#   MPC_COMMIT  mpc (multi_purpose_mpc_ros_custom) commit/branch to package.
-#               Defaults to origin/main.
-#   -p TEXT     Short purpose appended to the board comment (max 15 chars).
-#   --dry-run   Stop right before the actual upload (gates + summary only).
-#   --yes       Skip the upload confirmation prompt (non-interactive use).
+#   MPC_COMMIT       mpc (multi_purpose_mpc_ros_custom) commit/branch to package.
+#                    Defaults to origin/main.
+#   -p TEXT          Short purpose appended to the board comment (max 15 chars).
+#   --dry-run        Stop right before the actual upload (gates + summary only).
+#   --yes            Skip the upload confirmation prompt (non-interactive use).
+#   --opponent-rank N  opponentRank to request (1..min(5, current_rank-1));
+#                      defaults to the GUI default (1) if omitted.
 #
 # Shared checkouts are never touched: the tarball is built from origin/develop
 # in a throwaway worktree under .claude/worktrees/ (unique per run, removed on
@@ -28,6 +30,7 @@ MPC_COMMIT="origin/main"
 PURPOSE=""
 DRY_RUN=0
 YES=()
+OPPONENT_RANK=()
 while [ $# -gt 0 ]; do
     case "$1" in
     -p | --purpose)
@@ -41,6 +44,10 @@ while [ $# -gt 0 ]; do
     --yes)
         YES=(--yes)
         shift
+        ;;
+    --opponent-rank)
+        OPPONENT_RANK=(--opponent-rank "$2")
+        shift 2
         ;;
     -h | --help)
         sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'
@@ -130,7 +137,7 @@ if [ "$DRY_RUN" -eq 1 ]; then
 fi
 RC=0
 (cd "$ANALYSIS_DIR" && "${ARM[@]}" PYTHONPATH= uv run python scripts/upload_submission.py \
-    --file "$TAR" --comment "$COMMENT" ${YES[@]+"${YES[@]}"}) || RC=$?
+    --file "$TAR" --comment "$COMMENT" ${YES[@]+"${YES[@]}"} ${OPPONENT_RANK[@]+"${OPPONENT_RANK[@]}"}) || RC=$?
 
 if [ "$DRY_RUN" -eq 1 ]; then
     if [ "$RC" -eq 4 ]; then

@@ -26,11 +26,21 @@
     <param name="use_standstill_recovery" value="$(var use_standstill_recovery)"/>
     <param name="use_official_boost" value="$(var use_official_boost)"/>
     <param name="use_stats" value="true"/>
-    <!-- Time-domain MPCC opt-in. Defaults to true so a packaged submission
-         (which does not set this host env var) runs the MPCC controller;
-         local `make trial`/`make trial3` runs are unaffected since the
+    <!-- Time-domain MPCC opt-in. UPDATE (2026-08-03): reverted the
+         2026-07-30 true-default (#129) back to false for this submission
+         cycle. mpcc-ot40's tuned overtake candidates (trials 11/19/13/
+         16/12) all showed 11-21 genuine contact events in real races
+         despite scoring cleanly against fixed synthetic test opponents
+         (racingkart-analysis submit_result analysis, 2026-08-02), while a
+         re-tuned legacy controller (costmat+FSM searched jointly against
+         the same fixed opponents, fsm-combined1 trial 21) held up under
+         independent re-check (make trial3: 3 events/7 laps, vs the
+         MPCC-era stock baseline's 11) and is what's actually being
+         submitted now. A packaged submission does not set this host env
+         var, so this default is what the official board runs; local
+         `make trial`/`make trial3` runs are unaffected since the
          Makefile always exports USE_MPCC explicitly either way. Set
-         USE_MPCC=false on the host to force the legacy MPC controller. -->
-    <param name="use_mpcc" value="$(env USE_MPCC true)"/>
+         USE_MPCC=true on the host to force the MPCC controller. -->
+    <param name="use_mpcc" value="$(env USE_MPCC false)"/>
   </node>
 </launch>
