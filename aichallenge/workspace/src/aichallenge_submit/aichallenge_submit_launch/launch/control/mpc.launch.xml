@@ -32,7 +32,7 @@
          jitter3 trial22, fsm-combined-anchor324a9ba-1 trial2, and even an
          exact reproduction of the 2026-07-17 submission 324a9ba itself)
          has shown 8-17 real kinematic penalty events, well above what any
-         of those configs' local trial3 re-checks predicted -- the
+         of those configs' local trial3 re-checks predicted; the
          synthetic-vs-real generalization gap that originally motivated
          moving away from MPCC turned out not to be MPCC-specific.
          Submitting mpc@198a4fe (mpcc.branch_switch_margin_frac raised
@@ -42,7 +42,7 @@
          real opponent within 3-13m at the moment of contact) as a fresh
          data point. Local make trial3 (USE_MPCC=true): penalties 17->2,
          no wall contact, but best_lap collapsed to 105.4s and overtakes
-         dropped from 2/2 to 1/2 opponents passed -- likely overcorrected,
+         dropped from 2/2 to 1/2 opponents passed (likely overcorrected),
          submitting anyway to get a real-race baseline on this mechanism.
          A packaged submission does not set this host env var, so this
          default is what the official board runs; local `make trial`/
