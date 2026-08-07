@@ -26,21 +26,29 @@
     <param name="use_standstill_recovery" value="$(var use_standstill_recovery)"/>
     <param name="use_official_boost" value="$(var use_official_boost)"/>
     <param name="use_stats" value="true"/>
-    <!-- Time-domain MPCC opt-in. UPDATE (2026-08-03): reverted the
-         2026-07-30 true-default (#129) back to false for this submission
-         cycle. mpcc-ot40's tuned overtake candidates (trials 11/19/13/
-         16/12) all showed 11-21 genuine contact events in real races
-         despite scoring cleanly against fixed synthetic test opponents
-         (racingkart-analysis submit_result analysis, 2026-08-02), while a
-         re-tuned legacy controller (costmat+FSM searched jointly against
-         the same fixed opponents, fsm-combined1 trial 21) held up under
-         independent re-check (make trial3: 3 events/7 laps, vs the
-         MPCC-era stock baseline's 11) and is what's actually being
-         submitted now. A packaged submission does not set this host env
-         var, so this default is what the official board runs; local
-         `make trial`/`make trial3` runs are unaffected since the
-         Makefile always exports USE_MPCC explicitly either way. Set
-         USE_MPCC=true on the host to force the MPCC controller. -->
-    <param name="use_mpcc" value="$(env USE_MPCC false)"/>
+    <!-- Time-domain MPCC opt-in. UPDATE (2026-08-07): flipped back to
+         true for this submission cycle. Every legacy candidate tried
+         since the 2026-08-03 revert (fsm-combined1 trial21, fsm-combined-
+         jitter3 trial22, fsm-combined-anchor324a9ba-1 trial2, and even an
+         exact reproduction of the 2026-07-17 submission 324a9ba itself)
+         has shown 8-17 real kinematic penalty events, well above what any
+         of those configs' local trial3 re-checks predicted -- the
+         synthetic-vs-real generalization gap that originally motivated
+         moving away from MPCC turned out not to be MPCC-specific.
+         Submitting mpc@198a4fe (mpcc.branch_switch_margin_frac raised
+         0.02->0.40, weights.q_contour 0.70->2.0, see that repo's commit
+         for the full replay-based rationale: every genuine wall-contact
+         event in the last MPCC submission, ac6da94/board-59768d04, had a
+         real opponent within 3-13m at the moment of contact) as a fresh
+         data point. Local make trial3 (USE_MPCC=true): penalties 17->2,
+         no wall contact, but best_lap collapsed to 105.4s and overtakes
+         dropped from 2/2 to 1/2 opponents passed -- likely overcorrected,
+         submitting anyway to get a real-race baseline on this mechanism.
+         A packaged submission does not set this host env var, so this
+         default is what the official board runs; local `make trial`/
+         `make trial3` runs are unaffected since the Makefile always
+         exports USE_MPCC explicitly either way. Set USE_MPCC=false on the
+         host to force the legacy controller. -->
+    <param name="use_mpcc" value="$(env USE_MPCC true)"/>
   </node>
 </launch>
