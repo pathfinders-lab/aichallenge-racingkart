@@ -226,6 +226,46 @@ make trial3 USE_MPCC=true \
 
 ---
 
+## 混走評価（追い越しを測る）
+
+<div class="columns">
+
+<div>
+
+### タイムだけでなく追い越しで測る
+`trial3` の走行を解析すると、ラップタイムに加えて**追い越し指標**が出る:
+
+- **抜き切り時間**（8m 手前〜追い越し完了までの時間）
+- 追い越し中の**最小車間**・**接触**（車車 / 壁を区別）
+- **追い越し成功率 / クリーン成功率**
+
+→ HTML の「**追い越し**」タブ＋MLflow に記録。動画リプレイで各遭遇に飛べる。
+
+</div>
+
+<div>
+
+### 追い越しを自動で鍛える / 相手を作る
+```bash
+cd racingkart-analysis
+# 追い越し重視で探索（攻め=抜く / 守り=抜かれない を両立）
+uv run python optuna/optuna_mpc_tuning.py \
+  --objective overtake --scenarios challenger,defense \
+  --search fsm --study-name overtake-x --n-trials 40
+
+# 最近の提出物の走りを再現した相手(NPC)を生成
+uv run python scripts/build_npc_preset_from_submission.py \
+  --build-id <build_id> --fetch --bake --out <p3.yaml>
+```
+
+- 既定の `--objective time` は従来どおり（挙動は変わらない）
+- 相手の並び・config は `optuna/overtake_scenarios.yaml`
+
+</div>
+</div>
+
+---
+
 ## 評価フロー (提出前の確認)
 
 <div class="columns">
