@@ -41,7 +41,7 @@ style: |
 - 開発実行 (`make dev`) / 計測 (`make trial`) / 評価実行 (`make eval`) を使い分けられる
 - 実行ログを `output/` に整理し、提出物を `submit/` に作れる
 - 走行データを解析・可視化し、Optuna で MPC パラメータを自動最適化できる（`racingkart-analysis/`）
-- `make trial` 1コマンドで走行計測からダッシュボード反映まで自動完結（Cloudflare Pages）
+- `make trial` 1コマンドで走行計測から解析・ダッシュボード公開（Cloudflare Pages）まで自動
 - シミュレータ運用から実車補助 (`vehicle/`, `remote/`) まで周辺ツールが揃っている
 
 ---
@@ -233,7 +233,8 @@ make trial3 USE_MPCC=true \
 <div>
 
 ### タイムだけでなく追い越しで測る
-`trial3` の走行を解析すると、ラップタイムに加えて**追い越し指標**が出る:
+`make trial3`（`trial2` も）は走行後に自動で `analyze-race` → ダッシュボード公開まで走り、
+ラップタイムに加えて**追い越し指標**が出る:
 
 - **抜き切り時間**（8m 手前〜追い越し完了までの時間）
 - 追い越し中の**最小車間**・**接触**（車車 / 壁を区別）
@@ -352,13 +353,15 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 <div>
 
 ### 手順
-1. `make trial` を実行（6 周計測 → 解析 → MLflow 記録 まで自動）
-2. 結果ダッシュボードに自動反映（`gh` 認証済みなら即時、未認証は1時間以内）
+1. `make trial` を実行（6 周計測 → 解析 → MLflow 記録 → ダッシュボード公開 まで自動）
    → https://racingkart-results.pages.dev/runs/
 
-**1コマンドで完結。** `make analyze` の手動実行は不要。
+**1コマンドで完結。** `make analyze` / `make publish` の手動実行は不要。
 
-> 即時反映には `gh auth login` が必要（未認証でも1時間以内に自動同期）
+> ダッシュボード公開はローカルの `make publish`（sync → build → Cloudflare Pages デプロイ）を
+> `push_to_mlflow` が自動で呼ぶ。初回のみ `npx wrangler login` が必要（秘密キーは不要）。
+> `~/racingkart-results` を自動検出（`RACINGKART_RESULTS_DIR` で上書き可、
+> `RACINGKART_NO_AUTOPUBLISH=1` で無効化）。GitHub Actions による自動公開は廃止した。
 
 </div>
 
@@ -373,7 +376,7 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 | MPC stats 記録 | なし | あり | あり |
 | eval イメージ | 不要 | 不要 | 不要 |
 
-`make trial-quick` も同様に1コマンドでダッシュボードまで自動連携
+`make trial-quick` / `make eval` も同様に、実行後に自動でダッシュボード公開まで走る
 
 </div>
 </div>
@@ -387,10 +390,12 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 <div>
 
 ### 手順
-1. 最適化を実行（シミュレータ起動・MLflow記録・Pages公開まで自動）
+1. 最適化を実行（シミュレータ起動・各trialのMLflow記録・study結果のコミットまで自動）
    ```bash
    make optuna STUDY=mpc-q4 N=60
    ```
+   > `make trial` と違い、Optuna は**毎回ダッシュボード公開しない**（N 回デプロイを避けるため）。
+   > studies ページを更新したい時だけ `cd racingkart-results && git pull && make publish` を手動実行。
 2. 完了後、best params を config.yaml に適用
    ```bash
    make optuna-apply STUDY=mpc-q4
@@ -413,7 +418,7 @@ SIM_MODE=gate1 make eval    # 安全ゲートシナリオ など
 - **ベイズ最適化（TPE）** で効率的に収束
 - 同じ `--study-name` で途中再開可能
 - 最適化対象: MPC コスト行列（Q, QN, R）
-- 各 trial の結果は MLflow に自動記録 → Pages に反映
+- 各 trial の結果は MLflow に自動記録（ダッシュボード公開は手動 `make publish`）
 
 ### チームの最新結果
 - Dashboard: https://racingkart-results.pages.dev/

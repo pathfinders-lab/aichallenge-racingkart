@@ -175,9 +175,8 @@ MPC_CONFIG_3 ?=
 USE_MPCC ?= false
 export USE_MPCC
 
-# N-vehicle version of trial (7 laps; records /mpc/stats per vehicle; no analyze/MLflow —
-# see docs/superpowers/specs/2026-07-06-multi-vehicle-trial-design.md for why).
-# Waits for FinishALL in awsim.log, then runs make down automatically.
+# N-vehicle version of trial (7 laps; records /mpc/stats per vehicle).
+# Waits for FinishALL, runs make down, then analyze-race → MLflow → dashboard publish.
 trial2: SIM_MODE := trial2
 trial2: simulator
 	@echo "[trial2] AWSIM started (2 vehicles, 7 laps, ~7 min). Waiting for all laps (FinishALL)..."
@@ -189,7 +188,15 @@ trial2: simulator
 		env $$envp docker compose -p $$p up -d autoware; \
 	done
 	$(call WAIT_AWSIM_THEN_DOWN,trial2)
-	@echo "[trial2] Done. rosbags saved at: output/$(TIMESTAMP)/d1, output/$(TIMESTAMP)/d2"
+	@OUTPUT="output/$(TIMESTAMP)"; \
+	if (cd racingkart-analysis && $(MAKE) --no-print-directory analyze-race OUTPUT="../$${OUTPUT}" COMMAND=trial2 LAPS=6); then \
+	    echo "[trial2] Done. → https://racingkart-results.pages.dev/runs/"; \
+	else \
+	    echo ""; \
+	    echo "[trial2] ERROR: analyze-race failed. rosbags saved at: $${OUTPUT}/d1, d2"; \
+	    echo "  Retry: cd racingkart-analysis && make analyze-race OUTPUT=\"../$${OUTPUT}\" COMMAND=trial2 LAPS=6"; \
+	    exit 1; \
+	fi
 
 # N-vehicle version of trial-quick (3 laps; quick exploration).
 # Waits for FinishALL in awsim.log, then runs make down automatically.
@@ -204,10 +211,18 @@ trial2-quick: simulator
 		env $$envp docker compose -p $$p up -d autoware; \
 	done
 	$(call WAIT_AWSIM_THEN_DOWN,trial2-quick)
-	@echo "[trial2-quick] Done. rosbags saved at: output/$(TIMESTAMP)/d1, output/$(TIMESTAMP)/d2"
+	@OUTPUT="output/$(TIMESTAMP)"; \
+	if (cd racingkart-analysis && $(MAKE) --no-print-directory analyze-race OUTPUT="../$${OUTPUT}" COMMAND=trial2-quick LAPS=2); then \
+	    echo "[trial2-quick] Done. → https://racingkart-results.pages.dev/runs/"; \
+	else \
+	    echo ""; \
+	    echo "[trial2-quick] ERROR: analyze-race failed. rosbags saved at: $${OUTPUT}/d1, d2"; \
+	    echo "  Retry: cd racingkart-analysis && make analyze-race OUTPUT=\"../$${OUTPUT}\" COMMAND=trial2-quick LAPS=2"; \
+	    exit 1; \
+	fi
 
-# N-vehicle version of trial (7 laps; records /mpc/stats per vehicle; no analyze/MLflow).
-# Waits for FinishALL in awsim.log, then runs make down automatically.
+# N-vehicle version of trial (7 laps; records /mpc/stats per vehicle).
+# Waits for FinishALL, runs make down, then analyze-race → MLflow → dashboard publish.
 trial3: SIM_MODE := trial3
 trial3: simulator
 	@echo "[trial3] AWSIM started (3 vehicles, 7 laps, ~7 min). Waiting for all laps (FinishALL)..."
@@ -219,7 +234,15 @@ trial3: simulator
 		env $$envp docker compose -p $$p up -d autoware; \
 	done
 	$(call WAIT_AWSIM_THEN_DOWN,trial3)
-	@echo "[trial3] Done. rosbags saved at: output/$(TIMESTAMP)/d1, output/$(TIMESTAMP)/d2, output/$(TIMESTAMP)/d3"
+	@OUTPUT="output/$(TIMESTAMP)"; \
+	if (cd racingkart-analysis && $(MAKE) --no-print-directory analyze-race OUTPUT="../$${OUTPUT}" COMMAND=trial3 LAPS=6); then \
+	    echo "[trial3] Done. → https://racingkart-results.pages.dev/runs/"; \
+	else \
+	    echo ""; \
+	    echo "[trial3] ERROR: analyze-race failed. rosbags saved at: $${OUTPUT}/d1, d2, d3"; \
+	    echo "  Retry: cd racingkart-analysis && make analyze-race OUTPUT=\"../$${OUTPUT}\" COMMAND=trial3 LAPS=6"; \
+	    exit 1; \
+	fi
 
 # N-vehicle version of trial-quick (3 laps; quick exploration).
 # Waits for FinishALL in awsim.log, then runs make down automatically.
@@ -234,7 +257,15 @@ trial3-quick: simulator
 		env $$envp docker compose -p $$p up -d autoware; \
 	done
 	$(call WAIT_AWSIM_THEN_DOWN,trial3-quick)
-	@echo "[trial3-quick] Done. rosbags saved at: output/$(TIMESTAMP)/d1, output/$(TIMESTAMP)/d2, output/$(TIMESTAMP)/d3"
+	@OUTPUT="output/$(TIMESTAMP)"; \
+	if (cd racingkart-analysis && $(MAKE) --no-print-directory analyze-race OUTPUT="../$${OUTPUT}" COMMAND=trial3-quick LAPS=2); then \
+	    echo "[trial3-quick] Done. → https://racingkart-results.pages.dev/runs/"; \
+	else \
+	    echo ""; \
+	    echo "[trial3-quick] ERROR: analyze-race failed. rosbags saved at: $${OUTPUT}/d1, d2, d3"; \
+	    echo "  Retry: cd racingkart-analysis && make analyze-race OUTPUT=\"../$${OUTPUT}\" COMMAND=trial3-quick LAPS=2"; \
+	    exit 1; \
+	fi
 
 gate1: SIM_MODE := gate1
 gate2: SIM_MODE := gate2
