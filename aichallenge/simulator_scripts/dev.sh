@@ -18,7 +18,7 @@ exec $AWSIM_DIRECTORY/AWSIM.x86_64 \
     --sound off \
     --collisions on \
     --handicap off \
-    --wall-recovery on \
+    --wall-recovery off \
     --ranking off \
     --camera off \
     --lidar off
