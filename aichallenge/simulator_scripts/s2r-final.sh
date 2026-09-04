@@ -1,29 +1,27 @@
 #!/bin/bash
+# S2R の決勝用（4台 / handicap・ranking あり）
 
 AWSIM_DIRECTORY=/aichallenge/simulator/AWSIM
 export ROS_DOMAIN_ID=0
 
 exec $AWSIM_DIRECTORY/AWSIM.x86_64 \
-    --camera off \
-    --lidar off \
+    --venue citycircuit \
     --start-mode sync \
-    --start-count-seconds 5 \
-    --vehicles 3 \
+    --start-count-seconds 10 \
+    --vehicles 4 \
     --npcs 0 \
     --boosts 2 \
     --laps 6 \
-    --timeout 600.0 \
+    --timeout 420.0 \
     --steer-source ackermann \
-    --sound off \
-    --collisions off \
+    --sound on \
+    --collisions on \
     --handicap on \
     --wall-recovery off \
+    --start-random off \
     --ranking on \
-    -screen-fullscreen 1 \
-    -screen-width 1280 \
-    -screen-height 720 \
-    -screen-quality low \
-    -window-mode borderless # Unity default arg
+    --camera off \
+    --lidar off
 
 # Cameraを使う場合 : --camera cpu or gpu
 # LiDARを使う場合 : --lidar cpu or gpu

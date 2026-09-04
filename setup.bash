@@ -284,11 +284,11 @@ docker_as_sudo_ok() {
 docker_run() {
     if docker_as_user_ok; then
         docker "$@"
-        return 0
+        return $?
     fi
     if cmd_exists sudo && cmd_exists docker; then
         sudo docker "$@"
-        return 0
+        return $?
     fi
     warn "${FAIL} docker not available"
     return 1
@@ -297,11 +297,11 @@ docker_run() {
 docker_run_no_prompt() {
     if docker_as_user_ok; then
         docker "$@"
-        return 0
+        return $?
     fi
     if docker_as_sudo_ok; then
         sudo -n docker "$@"
-        return 0
+        return $?
     fi
     return 1
 }
@@ -309,11 +309,11 @@ docker_run_no_prompt() {
 docker_compose_run() {
     if docker_as_user_ok; then
         docker compose "$@"
-        return 0
+        return $?
     fi
     if cmd_exists sudo && cmd_exists docker; then
         sudo docker compose "$@"
-        return 0
+        return $?
     fi
     warn "${FAIL} docker not available"
     return 1
@@ -322,11 +322,11 @@ docker_compose_run() {
 docker_compose_run_no_prompt() {
     if docker_as_user_ok; then
         docker compose "$@"
-        return 0
+        return $?
     fi
     if docker_as_sudo_ok; then
         sudo -n docker compose "$@"
-        return 0
+        return $?
     fi
     return 1
 }
@@ -803,7 +803,7 @@ EOF
 }
 
 download_awsim() {
-    local default_url='https://tier4inc-my.sharepoint.com/:u:/g/personal/taiki_tanaka_tier4_jp/IQDQ-qqqTYQsT4TMh6Uu9Bj4AWXi_LD0-sKMFAny1s4vsB4?e=HURJRA'
+    local default_url='https://tier4inc-my.sharepoint.com/:u:/g/personal/taiki_tanaka_tier4_jp/IQBsN8eTeQilSoK0WVfAKdNyAbABgcIxEccn3syN0rmwpYU'
     local url="${AWSIM_ZIP_URL:-$default_url}"
 
     local keep_zip=0

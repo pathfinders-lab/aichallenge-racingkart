@@ -1,8 +1,8 @@
 # make file inspired by https://roborovsky-racers.github.io/RoborovskyNote/
 SHELL := /bin/bash
 
-.PHONY: autoware-build autoware-vehicle autoware-simulator autoware-request-initialpose autoware-request-control  awsim-request-start awsim-request-reset autoware-driver-zenoh autoware-driver-zenoh-rosbag trial trial-quick \
-	simulator dev dev2 dev3 dev4 driver zenoh download rviz2 down down_all ps autoware-attach autoware-bash eval optuna optuna-apply \
+.PHONY: autoware-build autoware-vehicle autoware-simulator autoware-request-initialpose autoware-request-control  awsim-request-start awsim-request-reset autoware-driver-zenoh autoware-driver-zenoh-rosbag setup-vehicle trial trial-quick \
+	simulator dev dev2 dev3 dev4 driver zenoh download rviz2 down down_all ps autoware-attach autoware-bash eval e2e optuna optuna-apply \
 	trial2 trial2-quick trial3 trial3-quick
 
 # Used by docker-compose.yml for build/eval artifact ownership.
@@ -76,11 +76,13 @@ autoware-build:
 # run autoware for vehicle
 autoware-vehicle:
 	@echo "Start Autoware for Vehicle"
+	@echo "Log dir: .$(LOG_DIR)"
 	LOG_DIR=$(LOG_DIR) RUN_MODE=vehicle docker compose up -d autoware
 
 # run autoware for simulator
 autoware-simulator:
 	@echo "Start Autoware for AWSIM"
+	@echo "Log dir: .$(LOG_DIR)"
 	@LOG_DIR=$(LOG_DIR) RUN_MODE=awsim docker compose up -d autoware 2>/dev/null
 
 # autoware command service use ROS_DOMAIN_ID from .env
@@ -100,6 +102,7 @@ awsim-request-reset:
 # run simulator (docker compose up -d simulator)
 simulator:
 	@echo "Start AWSIM (SIM_MODE=$(SIM_MODE))"
+	@echo "Log dir: .$(LOG_DIR)"
 	@LOG_DIR=$(LOG_DIR) SIM_MODE="$(SIM_MODE)" ROS_DOMAIN_ID=0 docker compose up -d simulator 2>/dev/null
 
 # racing kart (docker compose up -d driver)
@@ -267,6 +270,12 @@ trial3-quick: simulator
 	    exit 1; \
 	fi
 
+# e2e は練習兼提出参考モード（e2e.sh）。e2e-final.sh は make simulator-e2e-final。
+e2e: SIM_MODE := e2e
+e2e: simulator autoware-simulator
+	@echo "Start e2e simulation (AWSIM + Autoware)"
+	@echo "To stop: make down  (docker compose down --remove-orphans)"
+
 gate1: SIM_MODE := gate1
 gate2: SIM_MODE := gate2
 gate3: SIM_MODE := gate3
@@ -357,11 +366,19 @@ autoware-driver-zenoh:
 	sleep 15
 	LOG_DIR=$(LOG_DIR) docker compose up -d zenoh
 
+setup-vehicle:
+	@echo "Run vehicle setup check"
+	@cd vehicle && ./setup_check.sh
+
 # driver + autoware + all-topic rosbag + zenoh
 autoware-driver-zenoh-rosbag:
+	@echo "Run vehicle setup preflight check"
+	@cd vehicle && ./setup_check.sh --phase preflight
 	LOG_DIR=$(LOG_DIR) RUN_MODE=vehicle docker compose up -d driver autoware rosbag
 	sleep 15
 	LOG_DIR=$(LOG_DIR) docker compose up -d zenoh
+	@echo "Run vehicle setup runtime check"
+	@cd vehicle && ./setup_check.sh --phase runtime
 
 down:
 	@for p in 1 2 3 4; do docker compose -p $$p down --remove-orphans; done
