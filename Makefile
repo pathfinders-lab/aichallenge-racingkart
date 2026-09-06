@@ -168,6 +168,7 @@ dev2 dev3 dev4: simulator
 MPC_CONFIG_1 ?=
 MPC_CONFIG_2 ?=
 MPC_CONFIG_3 ?=
+MPC_CONFIG_4 ?=
 # Time-domain MPCC opt-in (Step 5). Default false keeps the legacy MPC
 # everywhere, so a plain `make trial*` and a race submission are unchanged.
 # USE_MPCC=true runs the EGO (vehicle 1) on MPCC; opponents (2/3) always stay
@@ -177,6 +178,28 @@ MPC_CONFIG_3 ?=
 #   make trial3 USE_MPCC=true MPC_CONFIG_2=<slow.yaml>  # MPCC ego vs slow opp
 USE_MPCC ?= false
 export USE_MPCC
+# Per-vehicle controller selection for multi-vehicle trials; vehicle 1
+# follows USE_MPCC, the others default to the legacy controller so plain
+# trial2/trial3 keep faithful opponents.
+USE_MPCC_2 ?= false
+USE_MPCC_3 ?= false
+USE_MPCC_4 ?= false
+# Per-vehicle official-boost switch; defaults preserve today's behavior
+# (launch-level default true for every vehicle).
+USE_OFFICIAL_BOOST ?= true
+USE_OFFICIAL_BOOST_1 ?= $(USE_OFFICIAL_BOOST)
+USE_OFFICIAL_BOOST_2 ?= $(USE_OFFICIAL_BOOST)
+USE_OFFICIAL_BOOST_3 ?= $(USE_OFFICIAL_BOOST)
+USE_OFFICIAL_BOOST_4 ?= $(USE_OFFICIAL_BOOST)
+# Per-vehicle workspace override: point a vehicle at another (pre-built)
+# worktree's aichallenge/ to race a different code version, e.g.
+#   make trial2 AICHALLENGE_DIR_2=$(PWD)/.claude/worktrees/candidate/aichallenge
+# Unset -> the shared ./aichallenge default. Each dir needs its own
+# autoware-build beforehand (run make autoware-build inside that worktree).
+AICHALLENGE_DIR_1 ?=
+AICHALLENGE_DIR_2 ?=
+AICHALLENGE_DIR_3 ?=
+AICHALLENGE_DIR_4 ?=
 
 # N-vehicle version of trial (7 laps; records /mpc/stats per vehicle).
 # Waits for FinishALL, runs make down, then analyze-race → MLflow → dashboard publish.
@@ -187,7 +210,13 @@ trial2: simulator
 		case $$p in 1) cfg="$(MPC_CONFIG_1)";; 2) cfg="$(MPC_CONFIG_2)";; esac; \
 		envp="LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p"; \
 		[ -n "$$cfg" ] && envp="$$envp MPC_CONFIG_PATH=$$cfg"; \
-		if [ "$$p" = "1" ]; then envp="$$envp USE_MPCC=$(USE_MPCC)"; else envp="$$envp USE_MPCC=false"; fi; \
+		case $$p in \
+		1) m="$(USE_MPCC)"; b="$(USE_OFFICIAL_BOOST_1)"; d="$(AICHALLENGE_DIR_1)";; \
+		2) m="$(USE_MPCC_2)"; b="$(USE_OFFICIAL_BOOST_2)"; d="$(AICHALLENGE_DIR_2)";; \
+		3) m="$(USE_MPCC_3)"; b="$(USE_OFFICIAL_BOOST_3)"; d="$(AICHALLENGE_DIR_3)";; \
+		esac; \
+		envp="$$envp USE_MPCC=$$m USE_OFFICIAL_BOOST=$$b"; \
+		[ -n "$$d" ] && envp="$$envp AICHALLENGE_DIR=$$d"; \
 		env $$envp docker compose -p $$p up -d autoware; \
 	done
 	$(call WAIT_AWSIM_THEN_DOWN,trial2)
@@ -210,7 +239,13 @@ trial2-quick: simulator
 		case $$p in 1) cfg="$(MPC_CONFIG_1)";; 2) cfg="$(MPC_CONFIG_2)";; esac; \
 		envp="LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p"; \
 		[ -n "$$cfg" ] && envp="$$envp MPC_CONFIG_PATH=$$cfg"; \
-		if [ "$$p" = "1" ]; then envp="$$envp USE_MPCC=$(USE_MPCC)"; else envp="$$envp USE_MPCC=false"; fi; \
+		case $$p in \
+		1) m="$(USE_MPCC)"; b="$(USE_OFFICIAL_BOOST_1)"; d="$(AICHALLENGE_DIR_1)";; \
+		2) m="$(USE_MPCC_2)"; b="$(USE_OFFICIAL_BOOST_2)"; d="$(AICHALLENGE_DIR_2)";; \
+		3) m="$(USE_MPCC_3)"; b="$(USE_OFFICIAL_BOOST_3)"; d="$(AICHALLENGE_DIR_3)";; \
+		esac; \
+		envp="$$envp USE_MPCC=$$m USE_OFFICIAL_BOOST=$$b"; \
+		[ -n "$$d" ] && envp="$$envp AICHALLENGE_DIR=$$d"; \
 		env $$envp docker compose -p $$p up -d autoware; \
 	done
 	$(call WAIT_AWSIM_THEN_DOWN,trial2-quick)
@@ -233,7 +268,13 @@ trial3: simulator
 		case $$p in 1) cfg="$(MPC_CONFIG_1)";; 2) cfg="$(MPC_CONFIG_2)";; 3) cfg="$(MPC_CONFIG_3)";; esac; \
 		envp="LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p"; \
 		[ -n "$$cfg" ] && envp="$$envp MPC_CONFIG_PATH=$$cfg"; \
-		if [ "$$p" = "1" ]; then envp="$$envp USE_MPCC=$(USE_MPCC)"; else envp="$$envp USE_MPCC=false"; fi; \
+		case $$p in \
+		1) m="$(USE_MPCC)"; b="$(USE_OFFICIAL_BOOST_1)"; d="$(AICHALLENGE_DIR_1)";; \
+		2) m="$(USE_MPCC_2)"; b="$(USE_OFFICIAL_BOOST_2)"; d="$(AICHALLENGE_DIR_2)";; \
+		3) m="$(USE_MPCC_3)"; b="$(USE_OFFICIAL_BOOST_3)"; d="$(AICHALLENGE_DIR_3)";; \
+		esac; \
+		envp="$$envp USE_MPCC=$$m USE_OFFICIAL_BOOST=$$b"; \
+		[ -n "$$d" ] && envp="$$envp AICHALLENGE_DIR=$$d"; \
 		env $$envp docker compose -p $$p up -d autoware; \
 	done
 	$(call WAIT_AWSIM_THEN_DOWN,trial3)
@@ -256,7 +297,13 @@ trial3-quick: simulator
 		case $$p in 1) cfg="$(MPC_CONFIG_1)";; 2) cfg="$(MPC_CONFIG_2)";; 3) cfg="$(MPC_CONFIG_3)";; esac; \
 		envp="LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p"; \
 		[ -n "$$cfg" ] && envp="$$envp MPC_CONFIG_PATH=$$cfg"; \
-		if [ "$$p" = "1" ]; then envp="$$envp USE_MPCC=$(USE_MPCC)"; else envp="$$envp USE_MPCC=false"; fi; \
+		case $$p in \
+		1) m="$(USE_MPCC)"; b="$(USE_OFFICIAL_BOOST_1)"; d="$(AICHALLENGE_DIR_1)";; \
+		2) m="$(USE_MPCC_2)"; b="$(USE_OFFICIAL_BOOST_2)"; d="$(AICHALLENGE_DIR_2)";; \
+		3) m="$(USE_MPCC_3)"; b="$(USE_OFFICIAL_BOOST_3)"; d="$(AICHALLENGE_DIR_3)";; \
+		esac; \
+		envp="$$envp USE_MPCC=$$m USE_OFFICIAL_BOOST=$$b"; \
+		[ -n "$$d" ] && envp="$$envp AICHALLENGE_DIR=$$d"; \
 		env $$envp docker compose -p $$p up -d autoware; \
 	done
 	$(call WAIT_AWSIM_THEN_DOWN,trial3-quick)
@@ -267,6 +314,66 @@ trial3-quick: simulator
 	    echo ""; \
 	    echo "[trial3-quick] ERROR: analyze-race failed. rosbags saved at: $${OUTPUT}/d1, d2, d3"; \
 	    echo "  Retry: cd racingkart-analysis && make analyze-race OUTPUT=\"../$${OUTPUT}\" COMMAND=trial3-quick LAPS=2"; \
+	    exit 1; \
+	fi
+
+# 4-vehicle version of trial (7 laps; finals grid size; records /mpc/stats per vehicle).
+# Waits for FinishALL, runs make down, then analyze-race -> MLflow -> dashboard publish.
+trial4: SIM_MODE := trial4
+trial4: simulator
+	@echo "[trial4] AWSIM started (4 vehicles, 7 laps, ~7 min). Waiting for all laps (FinishALL)..."
+	@for p in 1 2 3 4; do \
+		case $$p in 1) cfg="$(MPC_CONFIG_1)";; 2) cfg="$(MPC_CONFIG_2)";; 3) cfg="$(MPC_CONFIG_3)";; 4) cfg="$(MPC_CONFIG_4)";; esac; \
+		envp="LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p"; \
+		[ -n "$$cfg" ] && envp="$$envp MPC_CONFIG_PATH=$$cfg"; \
+		case $$p in \
+		1) m="$(USE_MPCC)"; b="$(USE_OFFICIAL_BOOST_1)"; d="$(AICHALLENGE_DIR_1)";; \
+		2) m="$(USE_MPCC_2)"; b="$(USE_OFFICIAL_BOOST_2)"; d="$(AICHALLENGE_DIR_2)";; \
+		3) m="$(USE_MPCC_3)"; b="$(USE_OFFICIAL_BOOST_3)"; d="$(AICHALLENGE_DIR_3)";; \
+		4) m="$(USE_MPCC_4)"; b="$(USE_OFFICIAL_BOOST_4)"; d="$(AICHALLENGE_DIR_4)";; \
+		esac; \
+		envp="$$envp USE_MPCC=$$m USE_OFFICIAL_BOOST=$$b"; \
+		[ -n "$$d" ] && envp="$$envp AICHALLENGE_DIR=$$d"; \
+		env $$envp docker compose -p $$p up -d autoware; \
+	done
+	$(call WAIT_AWSIM_THEN_DOWN,trial4)
+	@OUTPUT="output/$(TIMESTAMP)"; \
+	if (cd racingkart-analysis && $(MAKE) --no-print-directory analyze-race OUTPUT="../$${OUTPUT}" COMMAND=trial4 LAPS=6); then \
+	    echo "[trial4] Done. → https://racingkart-results.pages.dev/runs/"; \
+	else \
+	    echo ""; \
+	    echo "[trial4] ERROR: analyze-race failed. rosbags saved at: $${OUTPUT}/d1..d4"; \
+	    echo "  Retry: cd racingkart-analysis && make analyze-race OUTPUT=\"../$${OUTPUT}\" COMMAND=trial4 LAPS=6"; \
+	    exit 1; \
+	fi
+
+# 4-vehicle version of trial-quick (3 laps; quick exploration).
+# Waits for FinishALL in awsim.log, then runs make down automatically.
+trial4-quick: SIM_MODE := trial4-quick
+trial4-quick: simulator
+	@echo "[trial4-quick] AWSIM started (4 vehicles, 3 laps, ~3.5 min). Waiting for all laps (FinishALL)..."
+	@for p in 1 2 3 4; do \
+		case $$p in 1) cfg="$(MPC_CONFIG_1)";; 2) cfg="$(MPC_CONFIG_2)";; 3) cfg="$(MPC_CONFIG_3)";; 4) cfg="$(MPC_CONFIG_4)";; esac; \
+		envp="LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p"; \
+		[ -n "$$cfg" ] && envp="$$envp MPC_CONFIG_PATH=$$cfg"; \
+		case $$p in \
+		1) m="$(USE_MPCC)"; b="$(USE_OFFICIAL_BOOST_1)"; d="$(AICHALLENGE_DIR_1)";; \
+		2) m="$(USE_MPCC_2)"; b="$(USE_OFFICIAL_BOOST_2)"; d="$(AICHALLENGE_DIR_2)";; \
+		3) m="$(USE_MPCC_3)"; b="$(USE_OFFICIAL_BOOST_3)"; d="$(AICHALLENGE_DIR_3)";; \
+		4) m="$(USE_MPCC_4)"; b="$(USE_OFFICIAL_BOOST_4)"; d="$(AICHALLENGE_DIR_4)";; \
+		esac; \
+		envp="$$envp USE_MPCC=$$m USE_OFFICIAL_BOOST=$$b"; \
+		[ -n "$$d" ] && envp="$$envp AICHALLENGE_DIR=$$d"; \
+		env $$envp docker compose -p $$p up -d autoware; \
+	done
+	$(call WAIT_AWSIM_THEN_DOWN,trial4-quick)
+	@OUTPUT="output/$(TIMESTAMP)"; \
+	if (cd racingkart-analysis && $(MAKE) --no-print-directory analyze-race OUTPUT="../$${OUTPUT}" COMMAND=trial4-quick LAPS=2); then \
+	    echo "[trial4-quick] Done. → https://racingkart-results.pages.dev/runs/"; \
+	else \
+	    echo ""; \
+	    echo "[trial4-quick] ERROR: analyze-race failed. rosbags saved at: $${OUTPUT}/d1..d4"; \
+	    echo "  Retry: cd racingkart-analysis && make analyze-race OUTPUT=\"../$${OUTPUT}\" COMMAND=trial4-quick LAPS=2"; \
 	    exit 1; \
 	fi
 
