@@ -177,15 +177,25 @@ MPC_CONFIG_3 ?=
 #   make trial3 USE_MPCC=true MPC_CONFIG_2=<slow.yaml>  # MPCC ego vs slow opp
 USE_MPCC ?= false
 export USE_MPCC
-# Self-play trials: vehicle 2 may also run MPCC (defense-role testing).
+# Per-vehicle controller selection for multi-vehicle trials; vehicle 1
+# follows USE_MPCC, the others default to the legacy controller so plain
+# trial2/trial3 keep faithful opponents.
 USE_MPCC_2 ?= false
-export USE_MPCC_2
+USE_MPCC_3 ?= false
 # Per-vehicle official-boost switch; defaults preserve today's behavior
 # (launch-level default true for every vehicle).
 USE_OFFICIAL_BOOST ?= true
-export USE_OFFICIAL_BOOST
+USE_OFFICIAL_BOOST_1 ?= $(USE_OFFICIAL_BOOST)
+USE_OFFICIAL_BOOST_2 ?= $(USE_OFFICIAL_BOOST)
 USE_OFFICIAL_BOOST_3 ?= $(USE_OFFICIAL_BOOST)
-export USE_OFFICIAL_BOOST_3
+# Per-vehicle workspace override: point a vehicle at another (pre-built)
+# worktree's aichallenge/ to race a different code version, e.g.
+#   make trial2 AICHALLENGE_DIR_2=$(PWD)/.claude/worktrees/candidate/aichallenge
+# Unset -> the shared ./aichallenge default. Each dir needs its own
+# autoware-build beforehand (run make autoware-build inside that worktree).
+AICHALLENGE_DIR_1 ?=
+AICHALLENGE_DIR_2 ?=
+AICHALLENGE_DIR_3 ?=
 
 # N-vehicle version of trial (7 laps; records /mpc/stats per vehicle).
 # Waits for FinishALL, runs make down, then analyze-race → MLflow → dashboard publish.
@@ -196,8 +206,13 @@ trial2: simulator
 		case $$p in 1) cfg="$(MPC_CONFIG_1)";; 2) cfg="$(MPC_CONFIG_2)";; esac; \
 		envp="LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p"; \
 		[ -n "$$cfg" ] && envp="$$envp MPC_CONFIG_PATH=$$cfg"; \
-		if [ "$$p" = "1" ]; then envp="$$envp USE_MPCC=$(USE_MPCC)"; elif [ "$$p" = "2" ]; then envp="$$envp USE_MPCC=$(USE_MPCC_2)"; else envp="$$envp USE_MPCC=false"; fi; \
-		if [ "$$p" = "3" ]; then envp="$$envp USE_OFFICIAL_BOOST=$(USE_OFFICIAL_BOOST_3)"; else envp="$$envp USE_OFFICIAL_BOOST=$(USE_OFFICIAL_BOOST)"; fi; \
+		case $$p in \
+		1) m="$(USE_MPCC)"; b="$(USE_OFFICIAL_BOOST_1)"; d="$(AICHALLENGE_DIR_1)";; \
+		2) m="$(USE_MPCC_2)"; b="$(USE_OFFICIAL_BOOST_2)"; d="$(AICHALLENGE_DIR_2)";; \
+		3) m="$(USE_MPCC_3)"; b="$(USE_OFFICIAL_BOOST_3)"; d="$(AICHALLENGE_DIR_3)";; \
+		esac; \
+		envp="$$envp USE_MPCC=$$m USE_OFFICIAL_BOOST=$$b"; \
+		[ -n "$$d" ] && envp="$$envp AICHALLENGE_DIR=$$d"; \
 		env $$envp docker compose -p $$p up -d autoware; \
 	done
 	$(call WAIT_AWSIM_THEN_DOWN,trial2)
@@ -220,8 +235,13 @@ trial2-quick: simulator
 		case $$p in 1) cfg="$(MPC_CONFIG_1)";; 2) cfg="$(MPC_CONFIG_2)";; esac; \
 		envp="LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p"; \
 		[ -n "$$cfg" ] && envp="$$envp MPC_CONFIG_PATH=$$cfg"; \
-		if [ "$$p" = "1" ]; then envp="$$envp USE_MPCC=$(USE_MPCC)"; elif [ "$$p" = "2" ]; then envp="$$envp USE_MPCC=$(USE_MPCC_2)"; else envp="$$envp USE_MPCC=false"; fi; \
-		if [ "$$p" = "3" ]; then envp="$$envp USE_OFFICIAL_BOOST=$(USE_OFFICIAL_BOOST_3)"; else envp="$$envp USE_OFFICIAL_BOOST=$(USE_OFFICIAL_BOOST)"; fi; \
+		case $$p in \
+		1) m="$(USE_MPCC)"; b="$(USE_OFFICIAL_BOOST_1)"; d="$(AICHALLENGE_DIR_1)";; \
+		2) m="$(USE_MPCC_2)"; b="$(USE_OFFICIAL_BOOST_2)"; d="$(AICHALLENGE_DIR_2)";; \
+		3) m="$(USE_MPCC_3)"; b="$(USE_OFFICIAL_BOOST_3)"; d="$(AICHALLENGE_DIR_3)";; \
+		esac; \
+		envp="$$envp USE_MPCC=$$m USE_OFFICIAL_BOOST=$$b"; \
+		[ -n "$$d" ] && envp="$$envp AICHALLENGE_DIR=$$d"; \
 		env $$envp docker compose -p $$p up -d autoware; \
 	done
 	$(call WAIT_AWSIM_THEN_DOWN,trial2-quick)
@@ -244,8 +264,13 @@ trial3: simulator
 		case $$p in 1) cfg="$(MPC_CONFIG_1)";; 2) cfg="$(MPC_CONFIG_2)";; 3) cfg="$(MPC_CONFIG_3)";; esac; \
 		envp="LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p"; \
 		[ -n "$$cfg" ] && envp="$$envp MPC_CONFIG_PATH=$$cfg"; \
-		if [ "$$p" = "1" ]; then envp="$$envp USE_MPCC=$(USE_MPCC)"; elif [ "$$p" = "2" ]; then envp="$$envp USE_MPCC=$(USE_MPCC_2)"; else envp="$$envp USE_MPCC=false"; fi; \
-		if [ "$$p" = "3" ]; then envp="$$envp USE_OFFICIAL_BOOST=$(USE_OFFICIAL_BOOST_3)"; else envp="$$envp USE_OFFICIAL_BOOST=$(USE_OFFICIAL_BOOST)"; fi; \
+		case $$p in \
+		1) m="$(USE_MPCC)"; b="$(USE_OFFICIAL_BOOST_1)"; d="$(AICHALLENGE_DIR_1)";; \
+		2) m="$(USE_MPCC_2)"; b="$(USE_OFFICIAL_BOOST_2)"; d="$(AICHALLENGE_DIR_2)";; \
+		3) m="$(USE_MPCC_3)"; b="$(USE_OFFICIAL_BOOST_3)"; d="$(AICHALLENGE_DIR_3)";; \
+		esac; \
+		envp="$$envp USE_MPCC=$$m USE_OFFICIAL_BOOST=$$b"; \
+		[ -n "$$d" ] && envp="$$envp AICHALLENGE_DIR=$$d"; \
 		env $$envp docker compose -p $$p up -d autoware; \
 	done
 	$(call WAIT_AWSIM_THEN_DOWN,trial3)
@@ -268,8 +293,13 @@ trial3-quick: simulator
 		case $$p in 1) cfg="$(MPC_CONFIG_1)";; 2) cfg="$(MPC_CONFIG_2)";; 3) cfg="$(MPC_CONFIG_3)";; esac; \
 		envp="LOG_DIR=$(LOG_DIR) ROS_DOMAIN_ID=$$p"; \
 		[ -n "$$cfg" ] && envp="$$envp MPC_CONFIG_PATH=$$cfg"; \
-		if [ "$$p" = "1" ]; then envp="$$envp USE_MPCC=$(USE_MPCC)"; elif [ "$$p" = "2" ]; then envp="$$envp USE_MPCC=$(USE_MPCC_2)"; else envp="$$envp USE_MPCC=false"; fi; \
-		if [ "$$p" = "3" ]; then envp="$$envp USE_OFFICIAL_BOOST=$(USE_OFFICIAL_BOOST_3)"; else envp="$$envp USE_OFFICIAL_BOOST=$(USE_OFFICIAL_BOOST)"; fi; \
+		case $$p in \
+		1) m="$(USE_MPCC)"; b="$(USE_OFFICIAL_BOOST_1)"; d="$(AICHALLENGE_DIR_1)";; \
+		2) m="$(USE_MPCC_2)"; b="$(USE_OFFICIAL_BOOST_2)"; d="$(AICHALLENGE_DIR_2)";; \
+		3) m="$(USE_MPCC_3)"; b="$(USE_OFFICIAL_BOOST_3)"; d="$(AICHALLENGE_DIR_3)";; \
+		esac; \
+		envp="$$envp USE_MPCC=$$m USE_OFFICIAL_BOOST=$$b"; \
+		[ -n "$$d" ] && envp="$$envp AICHALLENGE_DIR=$$d"; \
 		env $$envp docker compose -p $$p up -d autoware; \
 	done
 	$(call WAIT_AWSIM_THEN_DOWN,trial3-quick)
