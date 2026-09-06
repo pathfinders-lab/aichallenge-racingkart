@@ -23,6 +23,9 @@ x-autoware-base: &autoware-base
     # see mpc.launch.xml's comment). Set USE_MPCC=false on the host to run
     # the legacy MPC controller instead.
     - USE_MPCC
+    # Per-vehicle official-boost switch for multi-vehicle trials: unset ->
+    # mpc.launch.xml's $(env USE_OFFICIAL_BOOST true) keeps today's default.
+    - USE_OFFICIAL_BOOST
     - CMD=${CMD:-}
     - COLCON_TRACE=${COLCON_TRACE:-}
     - ROS_HOME=${ROS_HOME:-}

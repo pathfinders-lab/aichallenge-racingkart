@@ -25,7 +25,7 @@
     <param name="use_race_state_estimator" value="$(var use_race_state_estimator)"/>
     <param name="use_race_strategy_fsm" value="$(var use_race_strategy_fsm)"/>
     <param name="use_standstill_recovery" value="$(var use_standstill_recovery)"/>
-    <param name="use_official_boost" value="$(var use_official_boost)"/>
+    <param name="use_official_boost" value="$(env USE_OFFICIAL_BOOST $(var use_official_boost))"/>
     <param name="use_stats" value="true"/>
     <!-- Time-domain MPCC opt-in. UPDATE (2026-08-07): flipped back to
          true for this submission cycle. Every legacy candidate tried
