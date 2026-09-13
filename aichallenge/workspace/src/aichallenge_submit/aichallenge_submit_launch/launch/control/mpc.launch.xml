@@ -12,13 +12,29 @@
        AWSIM binary; older ones silently ignore /awsim/cmd. -->
   <arg name="use_official_boost" default="true"/>
 
+  <!-- Real-vehicle calibration overlay (mpc#178). The real kart's grip
+       (ay p95 8.5 vs the sim's frictionless 14), steering-rate limit
+       (0.39 rad/s, physical) and motor-protection window (throttle into a
+       wall trips it in 1-2 s) all differ from the AWSIM plant, so
+       real_overrides.yaml is deep-merged over config.yaml there. Gated on
+       use_sim_time rather than `simulation` so it agrees with
+       apply_real_vehicle_facts() in the controller, which swaps the
+       steering-rate seed on that same signal; `run_autoware.bash vehicle`
+       sets both false, and rosbag replay stays on the sim values for both.
+       Empty in simulation, so the sim command line is unchanged. -->
+  <let name="mpc_overrides_arg" value=""/>
+  <let name="mpc_overrides_arg"
+       value="--overrides_path $(find-pkg-share multi_purpose_mpc_ros_custom)/config/real_overrides.yaml"
+       unless="$(var use_sim_time)"/>
+
   <!-- MPC_CONFIG_PATH lets one vehicle in a multi-vehicle trial run an
        alternate MPC config (e.g. a slower preset) without a second
        worktree/build; unset means the packaged default (issue #104). -->
   <node pkg="multi_purpose_mpc_ros_custom" exec="run_mpc_controller.bash"
         name="mpc_controller" output="screen"
         args="--config_path $(env MPC_CONFIG_PATH $(find-pkg-share multi_purpose_mpc_ros_custom)/config/config.yaml)
-              --ref_vel_path $(find-pkg-share multi_purpose_mpc_ros_custom)/config/ref_vel.yaml">
+              --ref_vel_path $(find-pkg-share multi_purpose_mpc_ros_custom)/config/ref_vel.yaml
+              $(var mpc_overrides_arg)">
 
     <param name="use_sim_time" value="$(var use_sim_time)"/>
     <param name="use_obstacle_avoidance" value="$(var use_obstacle_avoidance)"/>
