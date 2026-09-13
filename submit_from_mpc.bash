@@ -3,7 +3,7 @@
 # in an isolated git worktree, then upload it to the aichallenge board.
 #
 # Usage:
-#   ./submit_from_mpc.bash [MPC_COMMIT] [-p "purpose"] [--dry-run] [--yes] [--opponent-rank N]
+#   ./submit_from_mpc.bash [MPC_COMMIT] [-p "purpose"] [--dry-run] [--yes] [--opponent-rank N] [--final]
 #
 #   MPC_COMMIT       mpc (multi_purpose_mpc_ros_custom) commit/branch to package.
 #                    Defaults to origin/main.
@@ -11,7 +11,10 @@
 #   --dry-run        Stop right before the actual upload (gates + summary only).
 #   --yes            Skip the upload confirmation prompt (non-interactive use).
 #   --opponent-rank N  opponentRank to request (1..min(5, current_rank-1));
-#                      defaults to the GUI default (1) if omitted.
+#                      defaults to the GUI default (1) if omitted. Qualify only.
+#   --final          Submit to the finals test ground (board "Submit Final":
+#                    solo practice run, no matchmaking/rating). Default is the
+#                    qualify (rated trios) mode.
 #
 # Shared checkouts are never touched: the tarball is built from origin/develop
 # in a throwaway worktree under .claude/worktrees/ (unique per run, removed on
@@ -31,6 +34,7 @@ PURPOSE=""
 DRY_RUN=0
 YES=()
 OPPONENT_RANK=()
+MODE=(--mode qualify)
 while [ $# -gt 0 ]; do
     case "$1" in
     -p | --purpose)
@@ -49,8 +53,12 @@ while [ $# -gt 0 ]; do
         OPPONENT_RANK=(--opponent-rank "$2")
         shift 2
         ;;
+    --final)
+        MODE=(--mode final)
+        shift
+        ;;
     -h | --help)
-        sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'
+        sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'
         exit 0
         ;;
     *)
@@ -137,7 +145,7 @@ if [ "$DRY_RUN" -eq 1 ]; then
 fi
 RC=0
 (cd "$ANALYSIS_DIR" && "${ARM[@]}" PYTHONPATH= uv run python scripts/upload_submission.py \
-    --file "$TAR" --comment "$COMMENT" ${YES[@]+"${YES[@]}"} ${OPPONENT_RANK[@]+"${OPPONENT_RANK[@]}"}) || RC=$?
+    --file "$TAR" --comment "$COMMENT" "${MODE[@]}" ${YES[@]+"${YES[@]}"} ${OPPONENT_RANK[@]+"${OPPONENT_RANK[@]}"}) || RC=$?
 
 if [ "$DRY_RUN" -eq 1 ]; then
     if [ "$RC" -eq 4 ]; then
