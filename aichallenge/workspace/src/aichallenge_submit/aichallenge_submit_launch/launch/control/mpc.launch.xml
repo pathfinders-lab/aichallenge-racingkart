@@ -21,10 +21,14 @@
        apply_real_vehicle_facts() in the controller, which swaps the
        steering-rate seed on that same signal; `run_autoware.bash vehicle`
        sets both false, and rosbag replay stays on the sim values for both.
+       The flag and its path are joined by "=" on purpose: ros2 launch
+       hands a substitution result to the process as ONE argv entry, so a
+       space-separated form arrives as a single token and argparse rejects
+       it (verified: unrecognized arguments, node dead, zero laps).
        Empty in simulation, so the sim command line is unchanged. -->
   <let name="mpc_overrides_arg" value=""/>
   <let name="mpc_overrides_arg"
-       value="--overrides_path $(find-pkg-share multi_purpose_mpc_ros_custom)/config/real_overrides.yaml"
+       value="--overrides_path=$(find-pkg-share multi_purpose_mpc_ros_custom)/config/real_overrides.yaml"
        unless="$(var use_sim_time)"/>
 
   <!-- MPC_CONFIG_PATH lets one vehicle in a multi-vehicle trial run an
