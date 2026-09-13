@@ -9,6 +9,8 @@
 #                    Defaults to origin/main.
 #   -p TEXT          Short purpose appended to the board comment (max 15 chars).
 #   --dry-run        Stop right before the actual upload (gates + summary only).
+#   --no-mlflow      Skip the MLflow pre-registration (deadline mode; GIT_VERSION
+#                    is still stamped, only the run linkage is lost).
 #   --yes            Skip the upload confirmation prompt (non-interactive use).
 #   --opponent-rank N  opponentRank to request (1..min(5, current_rank-1));
 #                      defaults to the GUI default (1) if omitted. Qualify only.
@@ -32,6 +34,7 @@ MPC_PATH="aichallenge/workspace/src/aichallenge_submit/multi_purpose_mpc_ros_cus
 MPC_COMMIT="origin/main"
 PURPOSE=""
 DRY_RUN=0
+NO_MLFLOW=0
 YES=()
 OPPONENT_RANK=()
 MODE=(--mode qualify)
@@ -43,6 +46,10 @@ while [ $# -gt 0 ]; do
         ;;
     --dry-run)
         DRY_RUN=1
+        shift
+        ;;
+    --no-mlflow)
+        NO_MLFLOW=1
         shift
         ;;
     --yes)
@@ -112,18 +119,29 @@ echo "Packaging mpc @ ${MPC_SHA} ($(git -C "$MPC_DIR" log -1 --format=%s))"
 
 # Pre-register the MLflow run and stamp the config (same contract as
 # create_submit_file.bash, but against the isolated worktree, always clean).
-REGISTER_OUTPUT="$(cd "$ANALYSIS_DIR" && make -s register-submission MPC_REPO="$MPC_DIR")"
-VERSION="$(printf '%s\n' "$REGISTER_OUTPUT" | sed -n 's/^VERSION=//p')"
-RUN_ID="$(printf '%s\n' "$REGISTER_OUTPUT" | sed -n 's/^RUN_ID=//p')"
-if [ -z "$VERSION" ] || [ -z "$RUN_ID" ]; then
-    echo "ERROR: register-submission did not return VERSION/RUN_ID; aborting." >&2
-    exit 1
-fi
-echo "MLflow run pre-registered: ${RUN_ID}"
-
 CFG="$MPC_DIR/multi_purpose_mpc_ros_custom/config"
-echo "$VERSION" >"$CFG/GIT_VERSION"
-echo "$RUN_ID" >"$CFG/MLFLOW_RUN_ID"
+if [ "$NO_MLFLOW" -eq 1 ]; then
+    # Deadline mode: skip the MLflow pre-registration (its cold start costs
+    # minutes per attempt). GIT_VERSION is still stamped -- the worktree is
+    # always clean here, so the controller logs the commit id and keeps the
+    # config dump redacted. Only the run linkage is lost; import can fall
+    # back to a fresh run later.
+    VERSION="$(git -C "$MPC_DIR" rev-parse --short HEAD)"
+    echo "MLflow pre-registration SKIPPED (--no-mlflow); version=${VERSION}"
+    echo "$VERSION" >"$CFG/GIT_VERSION"
+    rm -f "$CFG/MLFLOW_RUN_ID"
+else
+    REGISTER_OUTPUT="$(cd "$ANALYSIS_DIR" && make -s register-submission MPC_REPO="$MPC_DIR")"
+    VERSION="$(printf '%s\n' "$REGISTER_OUTPUT" | sed -n 's/^VERSION=//p')"
+    RUN_ID="$(printf '%s\n' "$REGISTER_OUTPUT" | sed -n 's/^RUN_ID=//p')"
+    if [ -z "$VERSION" ] || [ -z "$RUN_ID" ]; then
+        echo "ERROR: register-submission did not return VERSION/RUN_ID; aborting." >&2
+        exit 1
+    fi
+    echo "MLflow run pre-registered: ${RUN_ID}"
+    echo "$VERSION" >"$CFG/GIT_VERSION"
+    echo "$RUN_ID" >"$CFG/MLFLOW_RUN_ID"
+fi
 mkdir -p "$SCRIPT_DIR/submit"
 TAR="$SCRIPT_DIR/submit/aichallenge_submit.tar.gz"
 tar zcf "$TAR" -C "$WT/aichallenge/workspace/src" aichallenge_submit
