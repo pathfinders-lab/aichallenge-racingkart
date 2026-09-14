@@ -26,6 +26,12 @@ x-autoware-base: &autoware-base
     # Per-vehicle official-boost switch for multi-vehicle trials: unset ->
     # mpc.launch.xml's $(env USE_OFFICIAL_BOOST true) keeps today's default.
     - USE_OFFICIAL_BOOST
+    # Real-start rehearsal (finals): REQUEST_CONTROL_MODE=false keeps the
+    # autostart orchestrator from auto-granting AUTONOMOUS, so AWSIM stays
+    # in MANUAL like the real grid wait. Flip manually with
+    # `make autoware-request-control` (= the safety driver's switch), then
+    # `make awsim-request-start`. Unset -> auto-grant as today.
+    - REQUEST_CONTROL_MODE
     - CMD=${CMD:-}
     - COLCON_TRACE=${COLCON_TRACE:-}
     - ROS_HOME=${ROS_HOME:-}
