@@ -15,6 +15,11 @@
 	<!-- AWSIM only: auto request initialpose/control (+ optional capture/rosbag) -->
 	  <node pkg="autostart_orchestrator_py" exec="autostart_orchestrator_node.py" name="autostart_orchestrator" output="both">
 	  <param from="$(var autostart_orchestrator_params)"/>
+	  <!-- Real-start rehearsal: REQUEST_CONTROL_MODE=false leaves the sim in
+	       MANUAL until `make autoware-request-control` flips it, replicating
+	       the real grid sequence (manual wait -> SD flip -> go flag). Unset
+	       keeps the auto-grant default from the param file. -->
+	  <param name="request_control_mode" value="$(env REQUEST_CONTROL_MODE true)"/>
 	  <param name="enable_capture" value="$(var capture)"/>
 	  <param name="enable_rosbag" value="$(var rosbag)"/>
 	  <param name="enable_debug_visualization" value="$(var debug)"/>
